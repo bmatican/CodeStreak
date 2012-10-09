@@ -8,4 +8,10 @@ class Contest(models.Model):
   registered_users = models.ManyToManyField(User,
                                             related_name='registered_contests')
 
+  def __unicode__(self):
+    return u'Contest "%s"' % self.name
+
+  class Meta:
+    app_label = 'contests'
+
 __all__ = ['Contest']
