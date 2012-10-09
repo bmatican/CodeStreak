@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from CodeStreak.contests.models.contest import *
-
 class Task(models.Model):
   UNASSIGNED = 0
   EASY = 1
@@ -20,12 +18,20 @@ class Task(models.Model):
   difficulty = models.IntegerField(choices=DIFFICULTIES, default=UNASSIGNED)
   input = models.TextField()
   output = models.TextField()
-  contest = models.ForeignKey(Contest, blank=True, null=True,
-                              on_delete=models.SET_NULL)
-  scores = models.ManyToManyField(User, through='Score')
+
+  @staticmethod
+  def get_task(task_id):
+    return Task.objects.get(id=task_id)
+
+  @staticmethod
+  def check_output(task_id, output):
+    task = Task.get_task(task_id)
+    # TODO: mb check for whitespace issues?
+    ret = (output == task.output)
+    return ret
 
   def __unicode__(self):
-    return u'Task "%s"' % self.name
+    return u'Task "{0}"'.format(self.name)
 
   class Meta:
     app_label = 'contests'
