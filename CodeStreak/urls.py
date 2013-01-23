@@ -17,9 +17,9 @@ urlpatterns = patterns('',
   url(r'^test/(?P<test_id>\d+)', 'CodeStreak.contests.views.test'),
   url(r'^test', 'CodeStreak.contests.views.test'),
 
-  url(r'^contest/(?P<contest_id>\d+)/register/(?P<user_id>\d+)', 'CodeStreak.contests.views.register_to_contest'),
-  url(r'^contest/(?P<contest_id>\d+)', 'CodeStreak.contests.views.display_contest'),
-  url(r'^contest', 'CodeStreak.contests.views.display_contest'),
+  url(r'^contest/(?P<contest_id>\d+)/register/(?P<user_id>\d+)$', 'CodeStreak.contests.views.register_to_contest'),
+  url(r'^contest/(?P<contest_id>\d+)$', 'CodeStreak.contests.views.display_contest'),
+  url(r'^contest$', 'CodeStreak.contests.views.display_contest'),
 
   url(r'^pula', 'CodeStreak.contests.views.pula'),
 )

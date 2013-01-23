@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from time import time
 
-from CodeStreak.contests.models.task import *
+from CodeStreak.contests.models.task import Task
 
 class Contest(models.Model):
   name = models.CharField(max_length=128)
@@ -49,11 +49,6 @@ class Contest(models.Model):
   def assign_task(contest, task_id):
     task = Task.objects.get(id=task_id)
     contest.assigned_tasks.add(task)
-
-  @staticmethod
-  def register_user(contest, user_id):
-    user = User.objects.get(id=user_id)
-    contest.registered_users.add(user)
 
   @staticmethod
   def start_contest(contest):

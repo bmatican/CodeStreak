@@ -1,4 +1,6 @@
 from django.http import HttpResponse, Http404
+from django.db import IntegrityError
+from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
 from django.http import Http404
 
@@ -6,7 +8,8 @@ from django.http import Http404
 import json
 
 from CodeStreak.xhpy import *
-from CodeStreak.contests.models import Contest
+from CodeStreak.contests.models.contest import Contest
+from CodeStreak.contests.models.participation import Participation
 
 def test(request, test_id=None):
   if test_id == None:
@@ -108,9 +111,13 @@ def _display_contest(request, contest_id):
 def register_to_contest(request, contest_id, user_id):
   try:
     contest = Contest.get_contest(contest_id)
-    Contest.register_user(contest, user_id)
+    Participation.register_user(contest, user_id)
   except Contest.DoesNotExist:
-    return Http404
+    raise Http404
+  except User.DoesNotExist:
+    raise Http404
+  except IntegrityError:
+    return HttpResponse("You are already signed up for this contest!")
 
   page = ''
   page += '<p>Registration complete for {}</p>'.format(contest)

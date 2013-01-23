@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
 
-from CodeStreak.contests.models.task import *
-from CodeStreak.contests.models.contest import *
+from CodeStreak.contests.models.task import Task
+from CodeStreak.contests.models.contest import Contest
 
 class Score(models.Model):
   SKIPPED = 0.5
