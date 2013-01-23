@@ -27,8 +27,7 @@ class Task(models.Model):
   def check_output(task_id, output):
     task = Task.get_task(task_id)
     # TODO: mb check for whitespace issues?
-    ret = (output == task.output)
-    return ret
+    return output.strip() == task.output
 
   def __unicode__(self):
     return u'Task "{0}"'.format(self.name)

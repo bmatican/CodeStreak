@@ -6,13 +6,17 @@ from CodeStreak.contests.models.task import *
 from CodeStreak.contests.models.contest import *
 
 class Score(models.Model):
+  SKIPPED = 0.5
+  FULL = 1.0
+
   contest = models.ForeignKey(Contest)
   user = models.ForeignKey(User)
   task = models.ForeignKey(Task)
   score = models.FloatField(default=0)
-  end_time = models.DateTimeField(null=True)
+  # end_time = models.DateTimeField(null=True)
   tries = models.IntegerField(default=0)
   skipped = models.BooleanField(default=False)
+  solved = models.BooleanField(default=False)
 
   @staticmethod
   def _get_entry(contest_id, user_id, task_id):
@@ -30,11 +34,13 @@ class Score(models.Model):
   @staticmethod
   def solve_task(contest_id, user_id, task_id):
     entry = Score._get_entry(contest_id, user_id, task_id)
-    entry.end_time = datetime.now()
+    # entry.end_time = datetime.now()
     if entry.skipped == True:
-      score = 0.5
+      score = Score.SKIPPED
     else:
-      score = 1
+      score = Score.FULL
+    entry.score = score
+    entry.solved = True
     Score._try_task(entry)
 
   @staticmethod
@@ -54,7 +60,7 @@ class Score(models.Model):
         contest__id=contest_id,
         user__id=user_id,
         skipped=True,
-    )
+    ).values_list('task__id')
 
   def __unicode__(self):
     return u'Score for contest_id={0}, user_id={1}, task_id={2}'.format(
@@ -63,5 +69,8 @@ class Score(models.Model):
 
   class Meta:
     app_label = 'contests'
+    unique_together = [
+      ['contest', 'user', 'task']
+    ]
 
 __all__ = ['Score']

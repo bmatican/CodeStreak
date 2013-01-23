@@ -11,6 +11,7 @@ class Contest(models.Model):
   registered_users = models.ManyToManyField(
       User,
       related_name='registered_contests',
+      through='Participation',
   )
   assigned_tasks = models.ManyToManyField(
       Task,
@@ -18,40 +19,53 @@ class Contest(models.Model):
   )
 
   @staticmethod
+  def get_all_contests(offset=None, limit=None):
+    if offset == None:
+      offset = 0
+    if limit == None:
+      limit = 30
+    end = int(offset) + int(limit)
+    return Contest.objects.all()[offset:end]
+
+  @staticmethod
   def get_contest(contest_id):
     return Contest.objects.get(id=contest_id)
 
   @staticmethod
-  def assign_tasks(contest_id, task_ids):
+  def get_assigned_tasks(contest):
+    return contest.assigned_tasks.all()
+
+  @staticmethod
+  def get_registered_users(contest):
+    return contest.registered_users.all()
+
+  @staticmethod
+  def assign_tasks(contest, task_ids):
     tasks = Task.objects.filter(id__in=task_ids)
-    contest = Contest.get_contest(contest_id)
     for t in tasks:
       contest.assigned_tasks.add(t)
 
   @staticmethod
-  def assign_task(contest_id, task_id):
+  def assign_task(contest, task_id):
     task = Task.objects.get(id=task_id)
-    Contest.get_contest(contest_id).assigned_tasks.add(task)
+    contest.assigned_tasks.add(task)
 
   @staticmethod
-  def register_user(contest_id, user_id):
+  def register_user(contest, user_id):
     user = User.objects.get(id=user_id)
-    Contest.get_contest(contest_id).registered_users.add(user)
+    contest.registered_users.add(user)
 
   @staticmethod
-  def start_contest(contest_id):
-    contest = Contest.get_contest(contest_id)
+  def start_contest(contest):
     contest.start_date = time()    
     contest.save()
     # TODO: admin, start for all users on all terminals, from controller
 
   @staticmethod
-  def stop_contest(contest_id):
-    contest = Contest.get_contest(contest_id)
+  def stop_contest(contest):
     contest.end_date = time()    
     contest.save()
     # TODO: admin, stop for all users on all terminals, from controller
-
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)

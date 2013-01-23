@@ -1,13 +1,16 @@
-import json
-
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.http import Http404
 
 
-from CodeStreak.xhpy import *
+import json
 
-def test(request, test_id=0):
+from CodeStreak.xhpy import *
+from CodeStreak.contests.models import Contest
+
+def test(request, test_id=None):
+  if test_id == None:
+    test_id = 0
   title = 'CodeStreak'
 
   page = \
@@ -60,3 +63,55 @@ def pula(request):
     raise Http404
 
     
+def display_contest(request, contest_id=None):
+  if contest_id == None:
+    return _display_all_contests(request)
+  else:
+    return _display_contest(request, contest_id)
+
+def _display_all_contests(request):
+  limit = request.GET.get('limit')
+  offset = request.GET.get('offset')
+  contests = Contest.get_all_contests(offset, limit)
+  page = ''
+  page += '<ul>'
+  for c in contests:
+    page += '<li>{}</li>'.format(c)
+  page += '</ul>'
+  return HttpResponse(str(page))
+
+def _display_contest(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  tasks = Contest.get_assigned_tasks(contest)
+  users = Contest.get_registered_users(contest)
+
+  page = ''
+  page += '<p>{}</p>'.format(contest)
+  page += '<p>Tasks</p>'
+  page += '<ul>'
+  for t in tasks:
+    page += '<li>{}</li>'.format(t)
+  page += '</ul>'
+
+  page += '<p>Users</p>'
+  page += '<ul>'
+  for u in users:
+    page += '<li>{}</li>'.format(u)
+  page += '</ul>'
+
+  return HttpResponse(str(page))
+
+def register_to_contest(request, contest_id, user_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+    Contest.register_user(contest, user_id)
+  except Contest.DoesNotExist:
+    return Http404
+
+  page = ''
+  page += '<p>Registration complete for {}</p>'.format(contest)
+  return HttpResponse(str(page))
