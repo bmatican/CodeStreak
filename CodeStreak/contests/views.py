@@ -6,12 +6,12 @@ from django.shortcuts import render_to_response
 from django.http import Http404
 from django.views.decorators.http import require_POST
 
-
 import json
 
 from CodeStreak.xhpy import *
 from CodeStreak.contests.models.contest import Contest
 from CodeStreak.contests.models.participation import Participation
+
 
 def test(request, test_id=None):
   if test_id == None:
@@ -29,10 +29,12 @@ def test(request, test_id=None):
 
   return HttpResponse(str(page))
 
+
 def getScores():
   return {
             'scores' : 'scores',
          }
+
 
 def getLogs():
   return {
@@ -60,10 +62,9 @@ def pula(request):
       data_function = restricted_data_providers.get(action)
       response = data_function()
     if response == None:
-        raise Http404
+      raise Http404
     else:
       return HttpResponse(json.dumps(response))
-    #return render_to_response('pula/response.html', locals())
   else:
     raise Http404
 
@@ -75,20 +76,21 @@ def contest_list(request):
 
   title = 'CodeStreak'
 
-  contest_list = <ul />
-  for contest in contests:
-    contest_list.appendChild(<li>{contest}</li>)
-
   page = \
   <cs:page title={title}>
     <cs:header />
     <cs:content>
-      {contest_list}
+      <h2>Contest List</h2>
+      <cs:contest-list contests={contests} />
     </cs:content>
     <cs:footer />
   </cs:page>
 
   return HttpResponse(str(page))
+
+
+def contest_home(request, contest_id):
+  return contest_ranking(request, contest_id)
 
 
 def contest_ranking(request, contest_id):

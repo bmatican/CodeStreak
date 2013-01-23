@@ -52,4 +52,4 @@ class Participation(models.Model):
       ['contest', 'user'],
     ]
 
-__all__ = ['Contest']
+__all__ = ['Participation']

@@ -18,6 +18,12 @@ class Contest(models.Model):
       related_name='assigned_contests',
   )
 
+  def get_registered_user_count(self):
+    return self.registered_users.count()
+
+  def get_assigned_task_count(self):
+    return self.assigned_tasks.count()
+
   @staticmethod
   def get_all_contests(offset=None, limit=None):
     if offset == None:
@@ -32,14 +38,6 @@ class Contest(models.Model):
     return Contest.objects.get(id=contest_id)
 
   @staticmethod
-  def get_assigned_task_count(contest):
-    return contest.assigned_tasks.count()
-
-  @staticmethod
-  def get_registered_user_count(contest):
-    return contest.registered_users.count()
-
-  @staticmethod
   def assign_tasks(contest, task_ids):
     tasks = Task.objects.filter(id__in=task_ids)
     for t in tasks:
@@ -52,13 +50,13 @@ class Contest(models.Model):
 
   @staticmethod
   def start_contest(contest):
-    contest.start_date = time()    
+    contest.start_date = time()
     contest.save()
     # TODO: admin, start for all users on all terminals, from controller
 
   @staticmethod
   def stop_contest(contest):
-    contest.end_date = time()    
+    contest.end_date = time()
     contest.save()
     # TODO: admin, stop for all users on all terminals, from controller
 

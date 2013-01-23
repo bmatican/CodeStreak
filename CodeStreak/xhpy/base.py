@@ -72,6 +72,11 @@ class :cs:header(:x:element):
                     </a>
                     <ul class="nav" id="navTabs">
                         <li class="active">
+                            <a href="#contestlist">
+                                Contest List
+                            </a>
+                        </li>
+                        <li>
                             <a href="#problemset">
                                 Problem Set
                             </a>
