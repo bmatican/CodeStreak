@@ -10,28 +10,31 @@ class Participation(models.Model):
   user = models.ForeignKey(User)
   score = models.FloatField(default=0)
 
-  @staticmethod
-  def get_entry(contest_id, user_id):
-    return Participation.objects.get(
+  @classmethod
+  def get_entry(cls, contest_id, user_id):
+    return cls.objects.get(
       contest__id=contest_id,
       user__id=user_id
     )
 
-  @staticmethod
-  def register_user(contest, user_id):
-    user = User.objects.get(id=user_id)
-    p = Participation(
-      contest=contest,
-      user=user,
+  @classmethod
+  def register_user(cls, contest_id, user_id):
+    p = cls(
+      contest_id=contest_id,
+      user_id=user_id,
     )
     p.save()
+
+  @classmethod
+  def unregister_user(cls, contest_id, user_id):
+    cls.get_entry(contest_id, user_id).delete()
 
   @staticmethod
   def solve_full(contest_id, user_id):
     entry = get_entry(contest_id, user_id)
     entry.score = Score.FULL
     entry.save()
-    
+
   @staticmethod
   def solve_skipped(contest_id, user_id):
     entry = get_entry(contest_id, user_id)

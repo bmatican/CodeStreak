@@ -1,8 +1,10 @@
 from django.http import HttpResponse, Http404
 from django.db import IntegrityError
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.http import Http404
+from django.views.decorators.http import require_POST
 
 
 import json
@@ -42,7 +44,7 @@ data_providers = {
 }
 
 restricted_data_providers = {
-  'getLogs' : getLogs, 
+  'getLogs' : getLogs,
 }
 
 def pula(request):
@@ -53,7 +55,7 @@ def pula(request):
     if action in data_providers:
       data_function = data_providers.get(action)
       response = data_function()
-    if (response == None and action in restricted_data_providers and 
+    if (response == None and action in restricted_data_providers and
         request.user.is_staff):
       data_function = restricted_data_providers.get(action)
       response = data_function()
@@ -65,32 +67,38 @@ def pula(request):
   else:
     raise Http404
 
-    
-def display_contest(request, contest_id=None):
-  if contest_id == None:
-    return _display_all_contests(request)
-  else:
-    return _display_contest(request, contest_id)
 
-def _display_all_contests(request):
+def contest_list(request):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
   contests = Contest.get_all_contests(offset, limit)
-  page = ''
-  page += '<ul>'
-  for c in contests:
-    page += '<li>{}</li>'.format(c)
-  page += '</ul>'
+
+  title = 'CodeStreak'
+
+  contest_list = <ul />
+  for contest in contests:
+    contest_list.appendChild(<li>{contest}</li>)
+
+  page = \
+  <cs:page title={title}>
+    <cs:header />
+    <cs:content>
+      {contest_list}
+    </cs:content>
+    <cs:footer />
+  </cs:page>
+
   return HttpResponse(str(page))
 
-def _display_contest(request, contest_id):
+
+def contest_ranking(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
   except Contest.DoesNotExist:
     raise Http404
 
-  tasks = Contest.get_assigned_tasks(contest)
-  users = Contest.get_registered_users(contest)
+  tasks = contest.assigned_tasks.all()
+  users = contest.registered_users.all()
 
   page = ''
   page += '<p>{}</p>'.format(contest)
@@ -108,17 +116,34 @@ def _display_contest(request, contest_id):
 
   return HttpResponse(str(page))
 
-def register_to_contest(request, contest_id, user_id):
+
+@require_POST
+@login_required
+def register_to_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
-    Participation.register_user(contest, user_id)
+    Participation.register_user(contest_id, request.user.id)
   except Contest.DoesNotExist:
-    raise Http404
-  except User.DoesNotExist:
     raise Http404
   except IntegrityError:
     return HttpResponse("You are already signed up for this contest!")
 
   page = ''
   page += '<p>Registration complete for {}</p>'.format(contest)
+  return HttpResponse(str(page))
+
+
+@require_POST
+@login_required
+def unregister_from_contest(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+    Participation.unregister_user(contest_id, request.user.id)
+  except Contest.DoesNotExist:
+    raise Http404
+  except Participation.DoesNotExist:
+    return HttpResponse("You are not signed up for this contest!")
+
+  page = ''
+  page += '<p>You are no longer registered for {}</p>'.format(contest)
   return HttpResponse(str(page))

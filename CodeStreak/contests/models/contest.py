@@ -32,12 +32,12 @@ class Contest(models.Model):
     return Contest.objects.get(id=contest_id)
 
   @staticmethod
-  def get_assigned_tasks(contest):
-    return contest.assigned_tasks.all()
+  def get_assigned_task_count(contest):
+    return contest.assigned_tasks.count()
 
   @staticmethod
-  def get_registered_users(contest):
-    return contest.registered_users.all()
+  def get_registered_user_count(contest):
+    return contest.registered_users.count()
 
   @staticmethod
   def assign_tasks(contest, task_ids):
