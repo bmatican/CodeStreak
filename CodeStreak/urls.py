@@ -22,7 +22,5 @@ urlpatterns = patterns('',
       'CodeStreak.contests.views.contest_ranking',
       name='contest-ranking'),
 
-  url(r'^main$', 'CodeStreak.contests.views.main'),
-
   url(r'^pula', 'CodeStreak.contests.views.pula'),
 )

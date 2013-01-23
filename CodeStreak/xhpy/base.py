@@ -16,7 +16,7 @@ class :cs:page(:x:element):
             settings.STATIC_URL + 'css/cs-base.css',
         ]
         js_files = [
-            '://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js',
+            settings.STATIC_URL + 'js/jquery-1.9.0.min.js',
             settings.STATIC_URL + 'js/bootstrap.min.js',
         ]
 
