@@ -21,55 +21,49 @@ class Contest(models.Model):
       blank=True
   )
 
+  @classmethod
+  def get_all_contests(cls, offset=None, limit=None):
+    if offset == None:
+      offset = 0
+    if limit == None:
+      limit = 30
+    end = int(offset) + int(limit)
+    return cls.objects.all()[offset:end]
+
+  @classmethod
+  def get_contest(cls, contest_id):
+    return cls.objects.get(id=contest_id)
+
   def get_registered_user_count(self):
     return self.registered_users.count()
 
   def get_assigned_task_count(self):
     return self.assigned_tasks.count()
 
-  @staticmethod
-  def get_all_contests(offset=None, limit=None):
-    if offset == None:
-      offset = 0
-    if limit == None:
-      limit = 30
-    end = int(offset) + int(limit)
-    return Contest.objects.all()[offset:end]
-
-  @staticmethod
-  def get_contest(contest_id):
-    return Contest.objects.get(id=contest_id)
-
-  @staticmethod
-  def assign_tasks(contest, task_ids):
+  def assign_tasks(self, task_ids):
     tasks = Task.objects.filter(id__in=task_ids)
     for t in tasks:
-      contest.assigned_tasks.add(t)
+      self.assigned_tasks.add(t)
 
-  @staticmethod
-  def assign_task(contest, task_id):
+  def assign_task(self, task_id):
     task = Task.objects.get(id=task_id)
-    contest.assigned_tasks.add(task)
+    self.assigned_tasks.add(task)
 
-  @staticmethod
-  def start(contest):
-    contest.start_date = time()    
-    contest.save()
+  def start(self):
+    self.start_date = time()
+    self.save()
 
-  @staticmethod
-  def stop(contest):
-    contest.end_date = time()    
-    contest.save()
+  def stop(self):
+    self.end_date = time()
+    self.save()
 
-  @staticmethod
-  def pause(contest):
-    contest.paused = True
-    contest.save()
+  def pause(self):
+    self.paused = True
+    self.save()
 
-  @staticmethod
-  def resume(contest):
-    contest.paused = False
-    contest.save()
+  def resume(self):
+    self.paused = False
+    self.save()
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)

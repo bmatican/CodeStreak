@@ -19,13 +19,13 @@ class Task(models.Model):
   input = models.TextField()
   output = models.TextField()
 
-  @staticmethod
-  def get_task(task_id):
-    return Task.objects.get(id=task_id)
+  @classmethod
+  def get_task(cls, task_id):
+    return cls.objects.get(id=task_id)
 
-  @staticmethod
-  def check_output(task_id, output):
-    task = Task.get_task(task_id)
+  @classmethod
+  def check_output(cls, task_id, output):
+    task = cls.get_task(task_id)
     # TODO: mb check for whitespace issues?
     return output.strip() == task.output
 

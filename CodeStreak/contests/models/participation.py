@@ -29,15 +29,15 @@ class Participation(models.Model):
   def unregister_user(cls, contest_id, user_id):
     cls.get_entry(contest_id, user_id).delete()
 
-  @staticmethod
-  def solve_full(contest_id, user_id):
-    entry = get_entry(contest_id, user_id)
+  @classmethod
+  def solve_full(cls, contest_id, user_id):
+    entry = cls.get_entry(contest_id, user_id)
     entry.score = Score.FULL
     entry.save()
 
-  @staticmethod
-  def solve_skipped(contest_id, user_id):
-    entry = get_entry(contest_id, user_id)
+  @classmethod
+  def solve_skipped(cls, contest_id, user_id):
+    entry = cls.get_entry(contest_id, user_id)
     entry.score = Score.FULL
     entry.save()
 

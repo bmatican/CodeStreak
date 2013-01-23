@@ -17,45 +17,45 @@ class Score(models.Model):
   skipped = models.BooleanField(default=False)
   solved = models.BooleanField(default=False)
 
-  @staticmethod
-  def _get_entry(contest_id, user_id, task_id):
-    return Score.objects.get(
+  @classmethod
+  def _get_entry(cls, contest_id, user_id, task_id):
+    return cls.objects.get(
         contest__id=contest_id, 
         user__id=user_id, 
         task__id=task_id,
     )
 
-  @staticmethod
-  def _try_task(entry):
+  @classmethod
+  def _try_task(cls, entry):
     entry.tries += 1
     entry.save()
 
-  @staticmethod
-  def solve_task(contest_id, user_id, task_id):
-    entry = Score._get_entry(contest_id, user_id, task_id)
+  @classmethod
+  def solve_task(cls, contest_id, user_id, task_id):
+    entry = cls._get_entry(contest_id, user_id, task_id)
     if entry.skipped == True:
-      score = Score.SKIPPED
+      score = cls.SKIPPED
     else:
-      score = Score.FULL
+      score = cls.FULL
     entry.score = score
     entry.solved = True
-    Score._try_task(entry)
+    cls._try_task(entry)
 
-  @staticmethod
-  def fail_task(contest_id, user_id, task_id):
-    entry = Score._get_entry(contest_id, user_id, task_id)
-    Score._try_task(entry)
+  @classmethod
+  def fail_task(cls, contest_id, user_id, task_id):
+    entry = cls._get_entry(contest_id, user_id, task_id)
+    cls._try_task(entry)
 
-  @staticmethod
-  def skip_task(contest_id, user_id, task_id):
-    entry = Score._get_entry(contest_id, user_id, task_id)
+  @classmethod
+  def skip_task(cls, contest_id, user_id, task_id):
+    entry = cls._get_entry(contest_id, user_id, task_id)
     entry.skipped = True
     entry.save()
 
-  @staticmethod
-  def get_visible_scores(contest_id, user_id):
+  @classmethod
+  def get_visible_scores(cls, contest_id, user_id):
     is_visible = models.Q(skipped=True) | models.Q(solved=True)
-    return Score.objects.select_related(
+    return cls.objects.select_related(
       'task',
     ).filter(
         contest__id=contest_id,
