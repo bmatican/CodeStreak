@@ -8,14 +8,17 @@ class Contest(models.Model):
   name = models.CharField(max_length=128)
   start_date = models.DateTimeField(null=True, blank=True, default=None)
   end_date = models.DateTimeField(null=True, blank=True, default=None)
+  paused = models.BooleanField(default=False)
   registered_users = models.ManyToManyField(
       User,
       related_name='registered_contests',
+      blank=True,
       through='Participation',
   )
   assigned_tasks = models.ManyToManyField(
       Task,
       related_name='assigned_contests',
+      blank=True
   )
 
   def get_registered_user_count(self):
@@ -49,16 +52,24 @@ class Contest(models.Model):
     contest.assigned_tasks.add(task)
 
   @staticmethod
-  def start_contest(contest):
-    contest.start_date = time()
+  def start(contest):
+    contest.start_date = time()    
     contest.save()
-    # TODO: admin, start for all users on all terminals, from controller
 
   @staticmethod
-  def stop_contest(contest):
-    contest.end_date = time()
+  def stop(contest):
+    contest.end_date = time()    
     contest.save()
-    # TODO: admin, stop for all users on all terminals, from controller
+
+  @staticmethod
+  def pause(contest):
+    contest.paused = True
+    contest.save()
+
+  @staticmethod
+  def resume(contest):
+    contest.paused = False
+    contest.save()
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)

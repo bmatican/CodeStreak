@@ -43,7 +43,7 @@ class Participation(models.Model):
 
   def __unicode__(self):
     return u'Participation for contest_id={}, user_id={}'.format(
-      self.contest_id, user_id
+      self.contest_id, self.user_id
     )
 
   class Meta:

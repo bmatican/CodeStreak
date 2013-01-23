@@ -9,8 +9,7 @@ from django.views.decorators.http import require_POST
 import json
 
 from CodeStreak.xhpy import *
-from CodeStreak.contests.models.contest import Contest
-from CodeStreak.contests.models.participation import Participation
+from CodeStreak.contests.models import *
 
 
 def test(request, test_id=None):
@@ -68,7 +67,6 @@ def pula(request):
   else:
     raise Http404
 
-
 def contest_list(request):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
@@ -89,8 +87,19 @@ def contest_list(request):
   return HttpResponse(str(page))
 
 
+@login_required
 def contest_home(request, contest_id):
-  return contest_ranking(request, contest_id)
+  user_id = request.user.id
+
+  try:
+    scores = Score.get_visible_scores(contest_id, user_id)
+
+    page = ''
+    for s in scores:
+      page += '{} -> {} -> {}\n'.format(s.task.id, s.task.difficulty, s.score)
+    return HttpResponse(str(page))
+  except:
+    return Http404
 
 
 def contest_ranking(request, contest_id):

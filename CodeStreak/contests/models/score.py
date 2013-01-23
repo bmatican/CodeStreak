@@ -13,7 +13,6 @@ class Score(models.Model):
   user = models.ForeignKey(User)
   task = models.ForeignKey(Task)
   score = models.FloatField(default=0)
-  # end_time = models.DateTimeField(null=True)
   tries = models.IntegerField(default=0)
   skipped = models.BooleanField(default=False)
   solved = models.BooleanField(default=False)
@@ -34,7 +33,6 @@ class Score(models.Model):
   @staticmethod
   def solve_task(contest_id, user_id, task_id):
     entry = Score._get_entry(contest_id, user_id, task_id)
-    # entry.end_time = datetime.now()
     if entry.skipped == True:
       score = Score.SKIPPED
     else:
@@ -55,12 +53,16 @@ class Score(models.Model):
     entry.save()
 
   @staticmethod
-  def get_skipped_tasks(contest_id, user_id):
-    return Score.objects.filter(
+  def get_visible_scores(contest_id, user_id):
+    is_visible = models.Q(skipped=True) | models.Q(solved=True)
+    return Score.objects.select_related(
+      'task',
+    ).filter(
         contest__id=contest_id,
-        user__id=user_id,
-        skipped=True,
-    ).values_list('task__id')
+        user__id=user_id
+    ).filter(
+      is_visible
+    ).order_by('task')
 
   def __unicode__(self):
     return u'Score for contest_id={0}, user_id={1}, task_id={2}'.format(
