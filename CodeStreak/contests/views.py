@@ -15,3 +15,6 @@ def test(request, test_id=0):
   </cs:page>
 
   return HttpResponse(str(page))
+
+def pula(request):
+  return HttpResponse('Hi there {}')

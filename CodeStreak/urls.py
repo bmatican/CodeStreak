@@ -16,4 +16,6 @@ urlpatterns = patterns('',
 
   url(r'^test/(?P<test_id>\d+)', 'CodeStreak.contests.views.test'),
   url(r'^test', 'CodeStreak.contests.views.test'),
+
+  url(r'^pula', 'CodeStreak.contests.views.pula'),
 )
