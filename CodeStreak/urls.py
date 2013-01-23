@@ -7,9 +7,6 @@ urlpatterns = patterns('',
   url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
   url(r'^admin/', include(admin.site.urls)),
 
-  url(r'^facebook/', include('django_facebook.urls')),
-  url(r'^accounts/', include('django_facebook.auth_urls')),
-
   url(r'^$', 'CodeStreak.contests.views.contest_list'),
   url(r'^contest/(?P<contest_id>\d+)/register$',
       'CodeStreak.contests.views.register_to_contest',
@@ -24,7 +21,6 @@ urlpatterns = patterns('',
   url(r'^contest/(?P<contest_id>\d+)/ranking$',
       'CodeStreak.contests.views.contest_ranking',
       name='contest-ranking'),
-
 
   url(r'^main$', 'CodeStreak.contests.views.main'),
 
