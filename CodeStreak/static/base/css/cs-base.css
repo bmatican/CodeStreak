@@ -1,3 +1,11 @@
 body {
     padding-top: 50px;
 }
+
+.navbar-contest-name {
+    font-size: 20px;
+    font-weight: 200;
+    color: #777;
+    text-shadow: 0 1px 0 #fff;
+    padding: 10px 10px;
+}

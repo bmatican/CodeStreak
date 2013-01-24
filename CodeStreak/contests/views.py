@@ -5,28 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.http import Http404
 from django.views.decorators.http import require_POST
+from django.core.urlresolvers import reverse as url_reverse
 
 import json
 
 from CodeStreak.xhpy import *
 from CodeStreak.contests.models import *
-
-
-def test(request, test_id=None):
-  if test_id == None:
-    test_id = 0
-  title = 'CodeStreak'
-
-  page = \
-  <cs:page title={title}>
-    <cs:header />
-    <cs:content>
-      {'Hi there {}'.format(test_id)}
-    </cs:content>
-    <cs:footer />
-  </cs:page>
-
-  return HttpResponse(str(page))
 
 
 def getScores():
@@ -67,6 +51,7 @@ def pula(request):
   else:
     raise Http404
 
+
 def contest_list(request):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
@@ -76,7 +61,7 @@ def contest_list(request):
 
   page = \
   <cs:page title={title}>
-    <cs:header />
+    <cs:header-home />
     <cs:content>
       <h2>Contest List</h2>
       <cs:contest-list contests={contests} />
@@ -108,22 +93,33 @@ def contest_ranking(request, contest_id):
   except Contest.DoesNotExist:
     raise Http404
 
+  title = 'CodeStreak - {}'.format(contest.name)
+
   tasks = contest.assigned_tasks.all()
   users = contest.registered_users.all()
 
-  page = ''
-  page += '<p>{}</p>'.format(contest)
-  page += '<p>Tasks</p>'
-  page += '<ul>'
+  content = ''
+  content += '<p>{}</p>'.format(contest)
+  content += '<p>Tasks</p>'
+  content += '<ul>'
   for t in tasks:
-    page += '<li>{}</li>'.format(t)
-  page += '</ul>'
+    content += '<li>{}</li>'.format(t)
+  content += '</ul>'
 
-  page += '<p>Users</p>'
-  page += '<ul>'
+  content += '<p>Users</p>'
+  content += '<ul>'
   for u in users:
-    page += '<li>{}</li>'.format(u)
-  page += '</ul>'
+    content += '<li>{}</li>'.format(u)
+  content += '</ul>'
+
+  page = \
+  <cs:page title={title}>
+    <cs:header-contest contest={contest} active_home={False} />
+    <cs:content>
+      <textarea>{content}</textarea>
+    </cs:content>
+    <cs:footer />
+  </cs:page>
 
   return HttpResponse(str(page))
 
