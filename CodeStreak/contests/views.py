@@ -14,6 +14,10 @@ from CodeStreak.contests.models import *
 from CodeStreak.contests.utils.tasks import *
 
 
+# FIXME: Remove when POST requests is properly supported
+def require_POST(f):
+    return f
+
 def getScores():
   return {
             'scores' : 'scores',
@@ -61,7 +65,7 @@ def contest_list(request):
   title = 'CodeStreak'
 
   page = \
-  <cs:page title={title}>
+  <cs:page user={request.user} title={title}>
     <cs:header-home />
     <cs:content>
       <h2>Contest List</h2>
@@ -83,8 +87,8 @@ def contest_home(request, contest_id):
   title = 'CodeStreak - {}'.format(contest.name)
   content = <textarea />
   page = \
-  <cs:page title={title}>
-    <cs:header-contest contest={contest} active_home={True} />
+  <cs:page user={request.user} title={title}>
+    <cs:header-contest contest={contest} active_tab="contest-home" />
     <cs:content>{content}</cs:content>
     <cs:footer />
   </cs:page>
@@ -116,7 +120,7 @@ def contest_home(request, contest_id):
     for id in tasks:
       output += '<p>Task_id {}</p>'.format(id)
     content.appendChild(output)
-    return HttpResponse(str(output))
+    return HttpResponse(str(page))
   except Score.DoesNotExist:
     raise Http404
   except Contest.DoesNotExist:
@@ -132,8 +136,8 @@ def contest_ranking(request, contest_id):
   title = 'CodeStreak - {}'.format(contest.name)
   content = <textarea />
   page = \
-  <cs:page title={title}>
-    <cs:header-contest contest={contest} active_home={False} />
+  <cs:page user={request.user} title={title}>
+    <cs:header-contest contest={contest} active_tab="contest-ranking" />
     <cs:content>{content}</cs:content>
     <cs:footer />
   </cs:page>

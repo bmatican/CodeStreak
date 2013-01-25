@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from CodeStreak.contests.models import Contest, Task, Score, Participation
 
 admin.site.register(Contest)

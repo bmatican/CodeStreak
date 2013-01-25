@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from time import time
+from django.utils.timezone import now
 
 from CodeStreak.contests.models.task import Task
 
@@ -64,11 +64,11 @@ class Contest(models.Model):
     self.assigned_tasks.add(task)
 
   def start(self):
-    self.start_date = time()
+    self.start_date = now()
     self.save()
 
   def stop(self):
-    self.end_date = time()
+    self.end_date = now()
     self.save()
 
   def pause(self):

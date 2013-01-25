@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse as url_reverse
+from django.utils.timezone import now
 
 from CodeStreak.xhpy.base import *
+from CodeStreak.contests.models import Participation
 
 
 class :cs:header-home(:cs:header):
@@ -17,11 +19,13 @@ class :cs:header-home(:cs:header):
 class :cs:header-contest(:cs:header):
     attribute float end_timestamp,
               object contest @required,
-              bool active_home = True
+              object user,
+              str active_tab = 'content-home'
 
     def render(self):
         contest = self.getAttribute('contest')
-        active_home = self.getAttribute('active_home')
+        user = self.getAttribute('user')
+        active_tab = self.getAttribute('active_tab')
 
         self.prepended_children = \
         <x:frag>
@@ -33,15 +37,29 @@ class :cs:header-contest(:cs:header):
             <li class="navbar-contest-name">{contest.name}</li>
             <cs:header-link
                 link={url_reverse('contest-home', args=(contest.id,))}
-                active={active_home}>
+                active={active_tab == 'contest-home'}>
                 Problems
             </cs:header-link>
             <cs:header-link
                 link={url_reverse('contest-ranking', args=(contest.id,))}
-                active={not active_home}>
+                active={active_tab == 'contest-ranking'}>
                 Rankings
             </cs:header-link>
         </x:frag>
+        if user.is_authenticated() and contest.start_date > now():
+            try:
+                Participation.get_entry(contest.id, user.id)
+                content = 'Unregister'
+                link = url_reverse('contest-unregister', args=(contest.id,))
+            except Participation.DoesNotExist:
+                content = 'Register'
+                link = url_reverse('contest-register', args=(contest.id,))
+            self.prepended_children.appendChild(
+                <cs:header-link
+                    link={link}
+                    active={active_tab == 'contest-register'}>
+                    {content}
+                </cs:header-link>)
 
         return super(:cs:header-contest, self).render()
 

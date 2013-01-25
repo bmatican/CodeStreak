@@ -6,7 +6,8 @@ from CodeStreak.xhpy.lib import *
 
 
 class :cs:page(:x:element):
-    attribute str title @required
+    attribute str title @required,
+              object user
     children :cs:header, :cs:content, :cs:footer
 
     def render(self):
@@ -26,15 +27,17 @@ class :cs:page(:x:element):
             <title>{self.getAttribute('title')}</title>
         </head>
 
+        user = self.getAttribute('user')
         # Compose body of page
         for child in self.getChildren():
+            if user and 'user' in child._xhpyAttributeDeclaration():
+                child.setAttribute('user', user)
             if isinstance(child, :cs:header):
                 header = child
             elif isinstance(child, :cs:content):
                 content = child
             elif isinstance(child, :cs:footer):
                 footer = child
-
         body = \
         <body>
             {header}
