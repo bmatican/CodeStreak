@@ -12,8 +12,10 @@ urlpatterns = patterns('',
       name='contest-list'),
 
   url(r'^facebook/', include('django_facebook.urls')),
-  url(r'^accounts/', include('django_facebook.auth_urls')),
-
+  url(r'^accounts/login/$', 'CodeStreak.contests.views.login_view',
+      name='auth_login'),
+  url(r'^accounts/logout/$', 'CodeStreak.contests.views.logout_view',
+      name='auth_logout'),
 
   url(r'^contest/(?P<contest_id>\d+)/register$',
       'CodeStreak.contests.views.register_to_contest',
@@ -34,6 +36,4 @@ urlpatterns = patterns('',
   }),
 
   url(r'^pula', 'CodeStreak.contests.views.pula'),
-
-  url(r'^login_required', 'CodeStreak.contests.views.connectrequired'),
 )

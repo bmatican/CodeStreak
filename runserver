@@ -11,12 +11,12 @@ start_memcached()
 
 kill_memcached()
 {
-  kill $MEMCACHED_PID 
+  kill $MEMCACHED_PID
   echo "Killing memcached: pid=$MEMCACHED_PID"
   exit $?
 }
 
 # trap kill_memcached SIGINT
 
-start_memcached 
-./manage.py runserver
+start_memcached
+./manage.py runserver 0.0.0.0:8000

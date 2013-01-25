@@ -1,6 +1,7 @@
 class InvalidProblemOrderingException:
   pass
 
+
 class ProblemHandler:
   def __init__(self, seen_ids, indexed_task_ids):
     self.seen_ids = seen_ids
@@ -8,19 +9,17 @@ class ProblemHandler:
 
 
   def get_current_task(self):
-    bla = self.indexed_task_ids
     for ind, id in self.indexed_task_ids:
       if ind >= len(self.seen_ids):
         return (ind, id) # found it
       test = self.seen_ids[ind]
       if self.seen_ids[ind] != id:
-        raise self.seen_ids[ind]
-        # raise InvalidProblemOrderingException  # invalid order
+        raise InvalidProblemOrderingException  # invalid order
     return None   # no next problem
 
 
   def get_visible_tasks(self):
-    # no try catch, let 
+    # no try catch, let
     next = self.get_current_task()
     if next == None:
       return self.indexed_task_ids

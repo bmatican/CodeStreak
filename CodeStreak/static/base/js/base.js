@@ -5,14 +5,12 @@ $(document).ready(function(){
     $(this).button('loading');
   });
 });
-$(".alert").alert()
+$(".alert").alert();
 
-facebookAppId = '377224379022058';
 facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
-staticUrl = '/static/'; 
-function facebookJSLoaded(){ 
+function facebookJSLoaded(){
   FB.init({appId: facebookAppId, status: true, cookie: true, xfbml: true, oauth: true});
-} 
+}
 window.fbAsyncInit = facebookJSLoaded;
 F = new facebookClass(facebookAppId);
 F.load();

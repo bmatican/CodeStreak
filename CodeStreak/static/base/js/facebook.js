@@ -1,7 +1,3 @@
-
-/* Ugly as fuck */
-facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"]
-
 /*
 Maps locale from django to Facebook
 scraped like this from FB:

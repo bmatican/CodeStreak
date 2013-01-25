@@ -26,7 +26,7 @@ class :cs:page(:x:element):
             settings.STATIC_URL + 'js/bootstrap.min.js',
             settings.STATIC_URL + 'js/facebook.js',
             settings.STATIC_URL + 'js/base.js',
-        ] 
+        ]
         # Compose head of page
         head = \
         <head>
@@ -54,8 +54,12 @@ class :cs:page(:x:element):
                 {content}
                 {footer}
             </div>
-            <div id="fb-root">
-            </div>
+            <div id="fb-root" />
+            <script type="text/javascript">{ """
+                var facebookAppId = '{}';
+                var staticUrl = '{}';
+            """.format(settings.FACEBOOK_APP_ID, settings.STATIC_URL)
+            }</script>
         </body>
 
         # Add CSS files to header
@@ -93,14 +97,50 @@ class :cs:header(:x:element):
         fb_image = None
         user_displayname = None
         if user.is_authenticated():
-          if user.first_name and user.last_name:
-            user_displayname = user.first_name + ' ' + user.last_name
-          else:
-            user_displayname = user.username
-          fb_user = FacebookProfile.objects.filter(user_id = user.id)
-          if len(fb_user) > 0 and fb_user[0].image:
-            fb_image = fb_user[0].image.url
-            
+            if user.first_name and user.last_name:
+                user_displayname = user.first_name + ' ' + user.last_name
+            else:
+                user_displayname = user.username
+            fb_user = FacebookProfile.objects.filter(user_id = user.id)
+            if len(fb_user) > 0 and fb_user[0].image:
+                fb_image = fb_user[0].image.url
+
+            user_info = \
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    {user_displayname}
+                    {<img class="navbar-img" src={fb_image} />
+                      if fb_image else <x:frag />}
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <a tabindex="-1" href="#">
+                            View Profile (coming soon)
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a tabindex="-1" href={settings.LOGOUT_URL}>
+                            Log out
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        else:
+            user_info = \
+            <li>
+                <form action="/facebook/connect/?facebook_login=1"
+                    method="post">
+                    <input type="hidden" value="/" name="next" />
+                    <button id="facebook-button" type="button"
+                        class="btn btn-primary pull-right"
+                        data-loading-text="Loading..."
+                        onclick="F.connect(this.parentNode); return false;">
+                        Connect with Facebook
+                    </button>
+                </form>
+            </li>
+
         return \
         <div class="navbar navbar-fixed-top">
             <div class="navbar-inner">
@@ -113,28 +153,7 @@ class :cs:header(:x:element):
                         {self.getChildren()}
                     </ul>
                     <ul class="nav pull-right">
-                    { <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                          {user_displayname}
-                          {<img class="navbar-img" src={fb_image} />
-                           if fb_image else <x:frag />}
-                        </a>
-                        <ul class="dropdown-menu" role="menu">
-                          <li><a tabindex="-1" href="#">View Profile (coming
-soon)</a></li>
-                          <li class="divider"></li>
-                          <li><a tabindex="-1" href="http://manticore.chu.cam.ac.uk/accounts/logout/">Log out</a></li>
-                        </ul>
-                      </li>
-                      if user.is_authenticated() else
-                      <li><form action="/facebook/connect/?facebook_login=1" method="post">
-                        <input type="hidden" value="" name="next" />
-                        <button id="facebook-button" type="button" class="btn \
-                            btn-primary pull-right" data-loading-text="Loading..." \
-                            onclick="F.connect(this.parentNode); return false;">
-                          Connect with Facebook
-                        </button>
-                      </form></li>}
+                        {user_info}
                     </ul>
                     {<div class="navbar-text pull-right">Time left:{' '}
                         <span id="timeLeft" class={end_timestamp}>
@@ -183,6 +202,8 @@ class :cs:content(:x:element):
         for message in messages:
             messages_xhp.appendChild(
                 <div class={"alert alert-{}".format(message.tags)}>
+                    <button type="button" class="close"
+                        data-dismiss="alert">x</button>
                     {message.message}
                 </div>)
 
