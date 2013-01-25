@@ -56,8 +56,13 @@ def pula(request):
   else:
     raise Http404
 
+def connectrequired(request):
+  return _contest_list(request, True)
 
 def contest_list(request):
+  return _contest_list(request, False)
+
+def _contest_list(request, alert_login):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
   contests = Contest.get_all_contests(offset, limit)
@@ -68,6 +73,12 @@ def contest_list(request):
   <cs:page request={request} title={title}>
     <cs:header-home />
     <cs:content>
+      { <div class="alert alert-error">
+          <button type="button" class="close" data-dismiss="alert">x</button>
+          <h4>Error!</h4>
+          You need to connect with Facebook to proceed.
+        </div>
+        if alert_login else <x:frag /> }
       <h2>Contest List</h2>
       <cs:contest-list contests={contests} />
     </cs:content>
@@ -75,7 +86,6 @@ def contest_list(request):
   </cs:page>
 
   return HttpResponse(str(page))
-
 
 @login_required
 def contest_home(request, contest_id):

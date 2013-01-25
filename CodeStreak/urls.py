@@ -34,4 +34,6 @@ urlpatterns = patterns('',
   }),
 
   url(r'^pula', 'CodeStreak.contests.views.pula'),
+
+  url(r'^login_required', 'CodeStreak.contests.views.connectrequired'),
 )

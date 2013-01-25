@@ -112,20 +112,30 @@ class :cs:header(:x:element):
                         {self.prepended_children}
                         {self.getChildren()}
                     </ul>
-                    { <div class="navbar-text pull-right">
-                        {user_displayname}
-                        {<img src={fb_image} />
-                         if fb_image else <x:frag />}
-                      </div>
+                    <ul class="nav pull-right">
+                    { <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                          {user_displayname}
+                          {<img class="navbar-img" src={fb_image} />
+                           if fb_image else <x:frag />}
+                        </a>
+                        <ul class="dropdown-menu" role="menu">
+                          <li><a tabindex="-1" href="#">View Profile (coming
+soon)</a></li>
+                          <li class="divider"></li>
+                          <li><a tabindex="-1" href="http://manticore.chu.cam.ac.uk/accounts/logout/">Log out</a></li>
+                        </ul>
+                      </li>
                       if user.is_authenticated() else
-                      <form action="/facebook/connect/?facebook_login=1" method="post">
+                      <li><form action="/facebook/connect/?facebook_login=1" method="post">
                         <input type="hidden" value="" name="next" />
                         <button id="facebook-button" type="button" class="btn \
                             btn-primary pull-right" data-loading-text="Loading..." \
                             onclick="F.connect(this.parentNode); return false;">
                           Connect with Facebook
                         </button>
-                      </form>}
+                      </form></li>}
+                    </ul>
                     {<div class="navbar-text pull-right">Time left:{' '}
                         <span id="timeLeft" class={end_timestamp}>
                             00:00:00

@@ -5,6 +5,7 @@ $(document).ready(function(){
     $(this).button('loading');
   });
 });
+$(".alert").alert()
 
 facebookAppId = '377224379022058';
 facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
