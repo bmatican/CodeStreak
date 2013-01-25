@@ -114,7 +114,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(os.path.dirname(__file__), '../templates'),
+    local_settings.PROJECT_DIR + '/templates',
 )
 
 INSTALLED_APPS = (
@@ -127,6 +127,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'CodeStreak.contests',
+    'django_facebook',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -168,6 +169,7 @@ LOGGING = {
 }
 
 TEMPLATE_CONTEXT_PROCESSORS = (
+  'django_facebook.context_processors.facebook',
   'django.contrib.auth.context_processors.auth',
   'django.core.context_processors.debug',
   'django.core.context_processors.i18n',
@@ -178,9 +180,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 AUTHENTICATION_BACKENDS = (
+  'django_facebook.auth_backends.FacebookBackend',
   'django.contrib.auth.backends.ModelBackend',
 )
 
+AUTH_PROFILE_MODULE = 'django_facebook.FacebookProfile'
 
 try:
   from local_settings import *

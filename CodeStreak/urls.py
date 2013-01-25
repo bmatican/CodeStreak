@@ -9,6 +9,11 @@ urlpatterns = patterns('',
 
   url(r'^$', 'CodeStreak.contests.views.contest_list',
       name='contest-list'),
+
+  url(r'^facebook/', include('django_facebook.urls')),
+  url(r'^accounts/', include('django_facebook.auth_urls')),
+
+
   url(r'^contest/(?P<contest_id>\d+)/register$',
       'CodeStreak.contests.views.register_to_contest',
       name='contest-register'),
@@ -22,6 +27,8 @@ urlpatterns = patterns('',
   url(r'^contest/(?P<contest_id>\d+)/ranking$',
       'CodeStreak.contests.views.contest_ranking',
       name='contest-ranking'),
+
+  url(r'^main$', 'CodeStreak.contests.views.main'),
 
   url(r'^pula', 'CodeStreak.contests.views.pula'),
 )
