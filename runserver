@@ -1,0 +1,22 @@
+# /bin/bash
+
+MEMCACHED_PORT=11211
+
+start_memcached()
+{
+  memcached -p $MEMCACHED_PORT &
+  MEMCACHED_PID=$!
+  echo "Starting memcached: pid=$MEMCACHED_PID"
+}
+
+kill_memcached()
+{
+  kill $MEMCACHED_PID 
+  echo "Killing memcached: pid=$MEMCACHED_PID"
+  exit $?
+}
+
+# trap kill_memcached SIGINT
+
+start_memcached 
+./manage.py runserver

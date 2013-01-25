@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
+
 from django.utils.timezone import now
+from django.core.cache import cache
 
 from CodeStreak.contests.models.task import Task
 
 class Contest(models.Model):
+  CACHE_PREFIX = 'contest'
   name = models.CharField(max_length=128)
   start_date = models.DateTimeField(null=True, blank=True, default=None)
   end_date = models.DateTimeField(null=True, blank=True, default=None)
@@ -36,17 +39,17 @@ class Contest(models.Model):
 
   @classmethod
   def get_task_ordering(cls, contest_id):
-    cached = False
-    if cached:
-      tasks = []
-    else:
+    cache_key = cls.CACHE_PREFIX + ":" + str(contest_id)
+    tasks = cache.get(cache_key)
+    if tasks == None:
       tasks = cls.objects.get(
         id=contest_id
       ).assigned_tasks.values(
         'id'
       )
-      tasks = [el['id'] for el in tasks]
-    return list(enumerate(tasks))
+      tasks = list(enumerate([el['id'] for el in tasks]))
+      cache.set(cache_key, tasks)
+    return tasks
 
   def get_registered_user_count(self):
     return self.registered_users.count()
