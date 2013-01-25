@@ -74,14 +74,30 @@ def contest_list(request):
 
 @login_required
 def contest_home(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  title = 'CodeStreak - {}'.format(contest.name)
+  content = <textarea />
+  page = \
+  <cs:page title={title}>
+    <cs:header-contest contest={contest} active_home={True} />
+    <cs:content>{content}</cs:content>
+    <cs:footer />
+  </cs:page>
+
   user_id = request.user.id
 
   try:
     scores = Score.get_visible_scores(contest_id, user_id)
 
-    page = ''
+    output = ''
     for s in scores:
-      page += '{} -> {} -> {}\n'.format(s.task.id, s.task.difficulty, s.score)
+      output += \
+        '{} -> {} -> {}\n'.format(s.task.id, s.task.difficulty, s.score)
+    content.appendChild(output)
     return HttpResponse(str(page))
   except:
     return Http404
@@ -94,32 +110,31 @@ def contest_ranking(request, contest_id):
     raise Http404
 
   title = 'CodeStreak - {}'.format(contest.name)
+  content = <textarea />
+  page = \
+  <cs:page title={title}>
+    <cs:header-contest contest={contest} active_home={False} />
+    <cs:content>{content}</cs:content>
+    <cs:footer />
+  </cs:page>
 
   tasks = contest.assigned_tasks.all()
   users = contest.registered_users.all()
 
-  content = ''
-  content += '<p>{}</p>'.format(contest)
-  content += '<p>Tasks</p>'
-  content += '<ul>'
+  output = ''
+  output += '<p>{}</p>'.format(contest)
+  output += '<p>Tasks</p>'
+  output += '<ul>'
   for t in tasks:
-    content += '<li>{}</li>'.format(t)
-  content += '</ul>'
+    output += '<li>{}</li>'.format(t)
+  output += '</ul>'
 
-  content += '<p>Users</p>'
-  content += '<ul>'
+  output += '<p>Users</p>'
+  output += '<ul>'
   for u in users:
-    content += '<li>{}</li>'.format(u)
-  content += '</ul>'
-
-  page = \
-  <cs:page title={title}>
-    <cs:header-contest contest={contest} active_home={False} />
-    <cs:content>
-      <textarea>{content}</textarea>
-    </cs:content>
-    <cs:footer />
-  </cs:page>
+    output += '<li>{}</li>'.format(u)
+  output += '</ul>'
+  content.appendChild(output)
 
   return HttpResponse(str(page))
 
