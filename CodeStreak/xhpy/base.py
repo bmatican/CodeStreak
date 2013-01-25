@@ -2,6 +2,9 @@
 
 from django.conf import settings
 from django.contrib import messages
+from django.template import Context, loader
+from django.template.context import RequestContext
+from django_facebook.models import FacebookProfile
 
 from CodeStreak.xhpy.lib import *
 
@@ -16,12 +19,14 @@ class :cs:page(:x:element):
             settings.STATIC_URL + 'css/bootstrap.min.css',
             settings.STATIC_URL + 'css/bootstrap-responsive.min.css',
             settings.STATIC_URL + 'css/cs-base.css',
+            settings.STATIC_URL + 'css/facebook.css',
         ]
         js_files = [
             settings.STATIC_URL + 'js/jquery-1.9.0.min.js',
             settings.STATIC_URL + 'js/bootstrap.min.js',
-        ]
-
+            settings.STATIC_URL + 'js/facebook.js',
+            settings.STATIC_URL + 'js/base.js',
+        ] 
         # Compose head of page
         head = \
         <head>
@@ -49,6 +54,8 @@ class :cs:page(:x:element):
                 {content}
                 {footer}
             </div>
+            <div id="fb-root">
+            </div>
         </body>
 
         # Add CSS files to header
@@ -72,7 +79,8 @@ class :cs:page(:x:element):
 
 
 class :cs:header(:x:element):
-    attribute float end_timestamp
+    attribute float end_timestamp,
+              object user
     children :cs:header-link*, :cs:header-separator*
 
     def __init__(self, *args, **kwargs):
@@ -80,7 +88,19 @@ class :cs:header(:x:element):
         self.prepended_children = <x:frag />
 
     def render(self):
+        user = self.getAttribute('user')
         end_timestamp = self.getAttribute('end_timestamp')
+        fb_image = None
+        user_displayname = None
+        if user.is_authenticated():
+          if user.first_name and user.last_name:
+            user_displayname = user.first_name + ' ' + user.last_name
+          else:
+            user_displayname = user.username
+          fb_user = FacebookProfile.objects.filter(user_id = user.id)
+          if len(fb_user) > 0 and fb_user[0].image:
+            fb_image = fb_user[0].image.url
+            
         return \
         <div class="navbar navbar-fixed-top">
             <div class="navbar-inner">
@@ -92,6 +112,20 @@ class :cs:header(:x:element):
                         {self.prepended_children}
                         {self.getChildren()}
                     </ul>
+                    { <div class="navbar-text pull-right">
+                        {user_displayname}
+                        {<img src={fb_image} />
+                         if fb_image else <x:frag />}
+                      </div>
+                      if user.is_authenticated() else
+                      <form action="/facebook/connect/?facebook_login=1" method="post">
+                        <input type="hidden" value="" name="next" />
+                        <button id="facebook-button" type="button" class="btn \
+                            btn-primary pull-right" data-loading-text="Loading..." \
+                            onclick="F.connect(this.parentNode); return false;">
+                          Connect with Facebook
+                        </button>
+                      </form>}
                     {<div class="navbar-text pull-right">Time left:{' '}
                         <span id="timeLeft" class={end_timestamp}>
                             00:00:00

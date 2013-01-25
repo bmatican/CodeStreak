@@ -189,6 +189,8 @@ AUTHENTICATION_BACKENDS = (
 )
 
 AUTH_PROFILE_MODULE = 'django_facebook.FacebookProfile'
+#FACEBOOK_REGISTRATION_BACKEND = 'registration.backends.default.DefaultBackend'
+
 
 CACHES = {
   'default': {

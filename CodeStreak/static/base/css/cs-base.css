@@ -9,3 +9,16 @@ body {
     text-shadow: 0 1px 0 #fff;
     padding: 10px 10px;
 }
+
+.navbar-text img {
+  max-height:30px;
+  width:auto;
+  vertical-align:middle;
+  border: 1px solid black;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  margin-left:5px;
+  margin-right:5px;
+}
