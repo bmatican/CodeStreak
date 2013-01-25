@@ -1,7 +1,7 @@
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.db import IntegrityError
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.shortcuts import render_to_response
 from django.http import Http404
 from django.views.decorators.http import require_POST
@@ -65,7 +65,7 @@ def contest_list(request):
   title = 'CodeStreak'
 
   page = \
-  <cs:page user={request.user} title={title}>
+  <cs:page request={request} title={title}>
     <cs:header-home />
     <cs:content>
       <h2>Contest List</h2>
@@ -87,7 +87,7 @@ def contest_home(request, contest_id):
   title = 'CodeStreak - {}'.format(contest.name)
   content = <textarea />
   page = \
-  <cs:page user={request.user} title={title}>
+  <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-home" />
     <cs:content>{content}</cs:content>
     <cs:footer />
@@ -136,7 +136,7 @@ def contest_ranking(request, contest_id):
   title = 'CodeStreak - {}'.format(contest.name)
   content = <textarea />
   page = \
-  <cs:page user={request.user} title={title}>
+  <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-ranking" />
     <cs:content>{content}</cs:content>
     <cs:footer />
@@ -168,15 +168,17 @@ def contest_ranking(request, contest_id):
 def register_to_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
+    contest_url = url_reverse('contest-home', args=(contest_id,))
     Participation.register_user(contest_id, request.user.id)
   except Contest.DoesNotExist:
     raise Http404
   except IntegrityError:
-    return HttpResponse("You are already signed up for this contest!")
+    messages.error(request, 'You are already signed up for this contest!')
+    return HttpResponseRedirect(contest_url)
 
-  page = ''
-  page += '<p>Registration complete for {}</p>'.format(contest)
-  return HttpResponse(str(page))
+  messages.info(request,
+      'Registration complete for {}'.format(contest.name))
+  return HttpResponseRedirect(contest_url)
 
 
 @require_POST
@@ -184,12 +186,14 @@ def register_to_contest(request, contest_id):
 def unregister_from_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
+    contest_url = url_reverse('contest-home', args=(contest_id,))
     Participation.unregister_user(contest_id, request.user.id)
   except Contest.DoesNotExist:
     raise Http404
   except Participation.DoesNotExist:
-    return HttpResponse("You are not signed up for this contest!")
+    messages.error(request, 'You are not signed up for this contest!')
+    return HttpResponseRedirect(contest_url)
 
-  page = ''
-  page += '<p>You are no longer registered for {}</p>'.format(contest)
-  return HttpResponse(str(page))
+  messages.info(request,
+      'You are no longer registered for {}'.format(contest.name))
+  return HttpResponseRedirect(contest_url)

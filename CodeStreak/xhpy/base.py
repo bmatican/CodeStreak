@@ -1,13 +1,14 @@
 # Copyright 2012 Bogdan-Cristian Tataroiu
 
 from django.conf import settings
+from django.contrib import messages
 
 from CodeStreak.xhpy.lib import *
 
 
 class :cs:page(:x:element):
     attribute str title @required,
-              object user
+              object request @required
     children :cs:header, :cs:content, :cs:footer
 
     def render(self):
@@ -27,11 +28,14 @@ class :cs:page(:x:element):
             <title>{self.getAttribute('title')}</title>
         </head>
 
-        user = self.getAttribute('user')
+        request = self.getAttribute('request')
         # Compose body of page
         for child in self.getChildren():
-            if user and 'user' in child._xhpyAttributeDeclaration():
-                child.setAttribute('user', user)
+            if 'user' in child._xhpyAttributeDeclaration():
+                child.setAttribute('user', request.user)
+            if 'messages' in child._xhpyAttributeDeclaration():
+                child.setAttribute('messages',
+                                   messages.get_messages(request))
             if isinstance(child, :cs:header):
                 header = child
             elif isinstance(child, :cs:content):
@@ -126,11 +130,21 @@ class :cs:header-separator(:x:element):
 
 
 class :cs:content(:x:element):
+    attribute list messages @required
     children any
 
     def render(self):
+        messages = self.getAttribute('messages')
+        messages_xhp = <div class="alerts" />
+        for message in messages:
+            messages_xhp.appendChild(
+                <div class={"alert alert-{}".format(message.tags)}>
+                    {message.message}
+                </div>)
+
         return \
         <div class="main-content">
+            {messages_xhp}
             {self.getChildren()}
         </div>
 
