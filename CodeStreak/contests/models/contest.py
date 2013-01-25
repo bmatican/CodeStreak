@@ -34,6 +34,20 @@ class Contest(models.Model):
   def get_contest(cls, contest_id):
     return cls.objects.get(id=contest_id)
 
+  @classmethod
+  def get_task_ordering(cls, contest_id):
+    cached = False
+    if cached:
+      tasks = []
+    else:
+      tasks = cls.objects.get(
+        id=contest_id
+      ).assigned_tasks.values(
+        'id'
+      )
+      tasks = [el['id'] for el in tasks]
+    return list(enumerate(tasks))
+
   def get_registered_user_count(self):
     return self.registered_users.count()
 

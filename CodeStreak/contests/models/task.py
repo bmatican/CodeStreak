@@ -30,7 +30,7 @@ class Task(models.Model):
     return output.strip() == task.output
 
   def __unicode__(self):
-    return u'Task "{0}"'.format(self.name)
+    return u'Task id: {}, diff: {}'.format(self.id, self.difficulty)
 
   class Meta:
     app_label = 'contests'

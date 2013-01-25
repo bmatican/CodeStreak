@@ -11,6 +11,7 @@ import json
 
 from CodeStreak.xhpy import *
 from CodeStreak.contests.models import *
+from CodeStreak.contests.utils.tasks import *
 
 
 def getScores():
@@ -92,15 +93,34 @@ def contest_home(request, contest_id):
 
   try:
     scores = Score.get_visible_scores(contest_id, user_id)
+    indexed_task_ids = Contest.get_task_ordering(contest_id)
+
+    seen_ids = [s.task.id for s in scores]
+    handler = ProblemHandler(seen_ids, indexed_task_ids)
+    tasks = handler.get_visible_tasks()
+    # (ind, id) | None | raise exception = handler.get_current_task()
+    # handler.is_task_visible(task_id)
 
     output = ''
+
+    output += '<p>Indexed tasks</p>'
+    for ind, id in indexed_task_ids:
+      output += '<p>Index {} -> Task_id {}</p>'.format(ind, id)
+
+    output += '<p>Scores</p>'
     for s in scores:
       output += \
-        '{} -> {} -> {}\n'.format(s.task.id, s.task.difficulty, s.score)
+        '<p> Task_id {} -> Diff {} -> Score {}</p>'.format(s.task.id, s.task.difficulty, s.score)
+
+    output += '<p>Visible Tasks</p>'
+    for id in tasks:
+      output += '<p>Task_id {}</p>'.format(id)
     content.appendChild(output)
-    return HttpResponse(str(page))
-  except:
-    return Http404
+    return HttpResponse(str(output))
+  except Score.DoesNotExist:
+    raise Http404
+  except Contest.DoesNotExist:
+    raise Http404
 
 
 def contest_ranking(request, contest_id):
