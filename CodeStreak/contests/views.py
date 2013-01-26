@@ -61,22 +61,23 @@ def contest_home(request, contest_id):
 
   user_id = request.user.id
   try:
-    scores = Score.get_visible_scores(contest_id, user_id)
+    scores = Score.get_scores(contest_id, user_id)
     indexed_task_ids = Contest.get_task_ordering(contest_id)
   except Score.DoesNotExist:
     raise Http404
   except Contest.DoesNotExist:
     raise Http404
 
-  seen_task_ids = []
+  done_task_ids = []
   task_by_id = {}
   score_by_task_id = {}
   for score in scores:
     task_by_id[score.task.id] = score.task
     score_by_task_id[score.task.id] = score
-    seen_task_ids.append(score.task.id)
+    if score.solved or score.skipped:
+        done_task_ids.append(score.task.id)
 
-  handler = TaskVisibilityHandler(seen_task_ids, indexed_task_ids)
+  handler = TaskVisibilityHandler(done_task_ids, indexed_task_ids)
   ordered_tasks = handler.get_visible_tasks()
   for p, task_id in ordered_tasks:
     if task_id not in task_by_id:

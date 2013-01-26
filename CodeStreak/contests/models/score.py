@@ -53,15 +53,12 @@ class Score(models.Model):
     entry.save()
 
   @classmethod
-  def get_visible_scores(cls, contest_id, user_id):
-    is_visible = models.Q(skipped=True) | models.Q(solved=True)
+  def get_scores(cls, contest_id, user_id):
     return cls.objects.select_related(
       'task',
     ).filter(
         contest__id=contest_id,
         user__id=user_id
-    ).filter(
-      is_visible
     ).order_by('task')
 
   def __unicode__(self):

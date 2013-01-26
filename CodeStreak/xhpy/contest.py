@@ -133,8 +133,8 @@ class :cs:contest-problem-set(:x:element):
                     row_class = 'error'
 
                 score_str = '{} ({} {})'.format(score.score,
-                        score.tries + 1,
-                        'try' if score.tries + 1 == 1 else 'tries')
+                        score.tries,
+                        'try' if score.tries == 1 else 'tries')
             task_url = url_reverse('task-view', args=(task.id,))
 
             tbody.appendChild(
