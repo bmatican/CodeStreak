@@ -87,9 +87,8 @@ class :cs:header(:x:element):
               object user
     children :cs:header-link*, :cs:header-separator*
 
-    def __init__(self, *args, **kwargs):
-        super(:cs:header, self).__init__(*args, **kwargs)
-        self.prepended_children = <x:frag />
+    def get_prepended_children(self):
+        return <x:frag />
 
     def render(self):
         user = self.getAttribute('user')
@@ -149,7 +148,7 @@ class :cs:header(:x:element):
                         CodeStreak
                     </a>
                     <ul class="nav">
-                        {self.prepended_children}
+                        {self.get_prepended_children()}
                         {self.getChildren()}
                     </ul>
                     <ul class="nav pull-right">

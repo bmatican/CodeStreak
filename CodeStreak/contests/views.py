@@ -19,44 +19,6 @@ from CodeStreak.contests.utils.tasks import *
 def require_POST(f):
     return f
 
-def getScores():
-  return {
-            'scores' : 'scores',
-         }
-
-
-def getLogs():
-  return {
-            'logs' : 'logs',
-         }
-
-data_providers = {
-  'getScores' : getScores,
-}
-
-restricted_data_providers = {
-  'getLogs' : getLogs,
-}
-
-def pula(request):
-  global data_providers
-  if request.is_ajax() and request.method == 'POST':
-    action = request.POST.get('action', '')
-    response = None
-    if action in data_providers:
-      data_function = data_providers.get(action)
-      response = data_function()
-    if (response == None and action in restricted_data_providers and
-        request.user.is_staff):
-      data_function = restricted_data_providers.get(action)
-      response = data_function()
-    if response == None:
-      raise Http404
-    else:
-      return HttpResponse(json.dumps(response))
-  else:
-    raise Http404
-
 
 def contest_list(request):
   limit = request.GET.get('limit')
@@ -86,7 +48,7 @@ def contest_home(request, contest_id):
     raise Http404
 
   title = 'CodeStreak - {}'.format(contest.name)
-  content = <pre />
+  content = <div />
   page = \
   <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-home" />
@@ -106,27 +68,29 @@ def contest_home(request, contest_id):
   except Contest.DoesNotExist:
     raise Http404
 
-  seen_ids = [s.task.id for s in scores]
-  handler = ProblemHandler(seen_ids, indexed_task_ids)
-  tasks = handler.get_visible_tasks()
-  # (ind, id) | None | raise exception = handler.get_current_task()
-  # handler.is_task_visible(task_id)
+  seen_task_ids = []
+  task_by_id = {}
+  score_by_task_id = {}
+  for score in scores:
+    task_by_id[score.task.id] = score.task
+    score_by_task_id[score.task.id] = score
+    seen_task_ids.append(score.task.id)
 
-  output = ''
+  handler = TaskVisibilityHandler(seen_task_ids, indexed_task_ids)
+  ordered_tasks = handler.get_visible_tasks()
+  for p, task_id in ordered_tasks:
+    if task_id not in task_by_id:
+      # Should only ever happen once, for the next task the user needs
+      # to attempt
+      task_by_id[task_id] = Task.get_task(task_id)
 
-  output += '<p>Indexed tasks</p>'
-  for ind, id in indexed_task_ids:
-    output += '<p>Index {} -> Task_id {}</p>'.format(ind, id)
+  content.appendChild(
+      <cs:contest-problem-set
+        contest={contest}
+        ordered_tasks={ordered_tasks}
+        task_by_id={task_by_id}
+        score_by_task_id={score_by_task_id} />)
 
-  output += '<p>Scores</p>'
-  for s in scores:
-    output += \
-      '<p> Task_id {} -> Diff {} -> Score {}</p>'.format(s.task.id, s.task.difficulty, s.score)
-
-  output += '<p>Visible Tasks</p>'
-  for id in tasks:
-    output += '<p>Task_id {}</p>'.format(id)
-  content.appendChild(output)
   return HttpResponse(str(page))
 
 

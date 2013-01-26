@@ -7,13 +7,11 @@ from CodeStreak.contests.models import Participation
 
 
 class :cs:header-home(:cs:header):
-    def render(self):
-        self.prepended_children = \
+    def get_prepended_children(self):
+        return \
         <cs:header-link link={url_reverse('contest-list')} active={True}>
             Contest List
         </cs:header-link>
-
-        return super(:cs:header-home, self).render()
 
 
 class :cs:header-contest(:cs:header):
@@ -22,12 +20,12 @@ class :cs:header-contest(:cs:header):
               object user,
               str active_tab = 'content-home'
 
-    def render(self):
+    def get_prepended_children(self):
         contest = self.getAttribute('contest')
         user = self.getAttribute('user')
         active_tab = self.getAttribute('active_tab')
 
-        self.prepended_children = \
+        prepended_children = \
         <x:frag>
             <cs:header-link
                 link={url_reverse('contest-list')}>
@@ -54,14 +52,14 @@ class :cs:header-contest(:cs:header):
             except Participation.DoesNotExist:
                 content = 'Register'
                 link = url_reverse('contest-register', args=(contest.id,))
-            self.prepended_children.appendChild(
+            prepended_children.appendChild(
                 <cs:header-link
                     link={link}
                     active={active_tab == 'contest-register'}>
                     {content}
                 </cs:header-link>)
 
-        return super(:cs:header-contest, self).render()
+        return prepended_children
 
 
 class :cs:contest-list(:x:element):
@@ -95,4 +93,59 @@ class :cs:contest-list(:x:element):
 
         return table
 
-__all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home", "xhpy_cs__contest_list"]
+
+class :cs:contest-problem-set(:x:element):
+    attribute object contest @required,
+              list ordered_tasks @required,
+              dict task_by_id @required,
+              dict score_by_task_id @required
+    children empty
+
+    def render(self):
+        tbody = <tbody />
+        table = \
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Problem name</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            {tbody}
+        </table>
+
+        ordered_tasks = self.getAttribute('ordered_tasks')
+        task_by_id = self.getAttribute('task_by_id')
+        score_by_task_id = self.getAttribute('score_by_task_id')
+        for cnt, task_id in ordered_tasks:
+            task = task_by_id[task_id]
+            score = score_by_task_id.get(task_id)
+
+            row_class = 'info'
+            score_str = '-'
+            if score:
+                if score.solved:
+                    row_class = 'success'
+                elif score.skipped:
+                    row_class = 'warning'
+                else:
+                    row_class = 'error'
+
+                score_str = '{} ({} {})'.format(score.score,
+                        score.tries + 1,
+                        'try' if score.tries + 1 == 1 else 'tries')
+            task_url = url_reverse('task-view', args=(task.id,))
+
+            tbody.appendChild(
+                <tr class={row_class}>
+                    <td><a href={task_url}>{cnt + 1}</a></td>
+                    <td><a href={task_url}>{task.name}</a></td>
+                    <td>{score_str}</td>
+                </tr>)
+
+        return table
+
+
+__all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
+           "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set"]

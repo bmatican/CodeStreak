@@ -2,7 +2,7 @@ class InvalidProblemOrderingException:
   pass
 
 
-class ProblemHandler:
+class TaskVisibilityHandler:
   def __init__(self, seen_ids, indexed_task_ids):
     self.seen_ids = seen_ids
     self.indexed_task_ids = indexed_task_ids
@@ -24,10 +24,7 @@ class ProblemHandler:
     if next == None:
       return self.indexed_task_ids
     else:
-      ind, id = next
-      ret = self.seen_ids[:]
-      ret.append(id)
-      return ret
+      return self.indexed_task_ids[:len(self.seen_ids) + 1]
 
 
   def is_task_visible(self, task_id):

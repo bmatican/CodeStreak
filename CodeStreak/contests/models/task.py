@@ -26,8 +26,7 @@ class Task(models.Model):
   @classmethod
   def check_output(cls, task_id, output):
     task = cls.get_task(task_id)
-    # TODO: mb check for whitespace issues?
-    return output.strip() == task.output
+    return output.strip() == task.output.strip()
 
   def __unicode__(self):
     return u'Task id: {}, diff: {}'.format(self.id, self.difficulty)
