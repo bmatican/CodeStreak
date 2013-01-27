@@ -61,7 +61,6 @@ class :cs:header-contest(:cs:header):
 
         return prepended_children
 
-
 class :cs:contest-list(:x:element):
     attribute list contests @required
     children empty
@@ -93,6 +92,36 @@ class :cs:contest-list(:x:element):
 
         return table
 
+class :cs:task-show(:x:element):
+    attribute object task @required
+    children empty
+
+    def render(self):
+      task = self.getAttribute('task')
+      page = \
+      <div>
+        <div class="page-header">
+        <h1>
+          { task.name }
+          <small> {' Difficulty: ' + task.get_difficulty_display()} </small>
+        </h1>
+        </div>
+        <blockquote>
+          <strong>Problem</strong>
+          <p>{ task.text } </p><br />
+          { <div>
+              <strong>Input</strong> <br />
+              <code>{task.input}</code>
+            </div>
+            if task.input else <x:frag />}
+        </blockquote>
+        <div class="input-append">
+          <input class="span2" name="ans" type="text" 
+              placeholder="Type answer..." />
+          <button class="btn" type="button">Submit!</button>
+        </div>
+      </div>
+      return page
 
 class :cs:contest-problem-set(:x:element):
     attribute object contest @required,
@@ -148,4 +177,5 @@ class :cs:contest-problem-set(:x:element):
 
 
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
-           "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set"]
+           "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
+           "xhpy_cs__task_show"]

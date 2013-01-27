@@ -32,8 +32,7 @@ urlpatterns = patterns('',
       name='contest-ranking'),
 
   url(r'^task/(?P<task_id>\d+)$',
-      # FIXME
-      'CodeStreak.contests.views.contest_home',
+      'CodeStreak.contests.views.view_task',
       name='task-view'),
 
   url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {

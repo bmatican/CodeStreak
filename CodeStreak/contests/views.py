@@ -39,6 +39,25 @@ def contest_list(request):
 
   return HttpResponse(str(page))
 
+@login_required
+def view_task(request, task_id):
+  try:
+    task = Task.get_task(task_id)
+  except Task.DoesNotExist:
+    raise Http404
+
+  title = 'CodeStreak - {}'.format(task.name)
+  content = <x:frag />
+  page = \
+  <cs:page request={request} title={title}>
+    <cs:header />
+    <cs:content>
+      <cs:task-show task={task} />
+    </cs:content>
+    <cs:footer />
+  </cs:page>
+
+  return HttpResponse(str(page)) 
 
 @login_required
 def contest_home(request, contest_id):
