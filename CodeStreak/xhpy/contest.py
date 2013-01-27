@@ -100,13 +100,8 @@ class :cs:task-show(:x:element):
       task = self.getAttribute('task')
       page = \
       <div>
-        <div class="page-header">
-        <h1>
-          { task.name }
-          <small> {' Difficulty: ' + task.get_difficulty_display()} </small>
-        </h1>
-        </div>
         <blockquote>
+          <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
           <strong>Problem</strong>
           <p>{ task.text } </p><br />
           { <div>
@@ -131,18 +126,7 @@ class :cs:contest-problem-set(:x:element):
     children empty
 
     def render(self):
-        tbody = <tbody />
-        table = \
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Problem name</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            {tbody}
-        </table>
+        response = <div class="accordion" id="accordion2"></div>
 
         ordered_tasks = self.getAttribute('ordered_tasks')
         task_by_id = self.getAttribute('task_by_id')
@@ -151,29 +135,40 @@ class :cs:contest-problem-set(:x:element):
             task = task_by_id[task_id]
             score = score_by_task_id.get(task_id)
 
-            row_class = 'info'
+            badge = <span class="label label-info">Untackled</span>
             score_str = '-'
             if score:
                 if score.solved:
-                    row_class = 'success'
+                    badge = <span class="label label-success">Solved</span>
                 elif score.skipped:
-                    row_class = 'warning'
+                    badge = <span class="label label-warning">Skipped</span>
                 else:
-                    row_class = 'error'
+                    badge = <span class="label label-error">Contact Admins</span>
 
                 score_str = '{} ({} {})'.format(score.score,
                         score.tries,
                         'try' if score.tries == 1 else 'tries')
             task_url = url_reverse('task-view', args=(task.id,))
 
-            tbody.appendChild(
-                <tr class={row_class}>
-                    <td><a href={task_url}>{cnt + 1}</a></td>
-                    <td><a href={task_url}>{task.name}</a></td>
-                    <td>{score_str}</td>
-                </tr>)
+            response.appendChild(
+              <div class="accordion-group">
+                <div class="accordion-heading">
+                   { ' ' }{badge} { ' ' }
+                  <a data-toggle="collapse"
+                      data-parent="#accordion2" href={"#collapse" + str(cnt+1)}>
+                    {task.name }
+                  </a>
+                </div>
+                <div id={"collapse" + str(cnt+1)} class="accordion-body collapse in">
+                  <div class="accordion-inner">
+                    <cs:task-show task={task} />
+                  </div>
+                </div>
+              </div>
 
-        return table
+            )
+
+        return response
 
 
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",

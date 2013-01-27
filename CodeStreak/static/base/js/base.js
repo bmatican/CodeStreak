@@ -6,6 +6,7 @@ $(document).ready(function(){
   });
 });
 $(".alert").alert();
+$(".collapse").collapse()
 
 facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
 function facebookJSLoaded(){
