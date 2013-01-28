@@ -204,12 +204,13 @@ def getScores(user, payload):
          }
 
 
-def isOperationAllowed(contest_id, task_id, user_id):
+def can_submit_task(contest_id, user_id, task_id):
   try:
     contest = Contest.get_contest(contest_id)
-    if contest.is_user_registered(user_id):
-      # check if task visible
-      return True
+    is_registered = contest.is_user_registered(user_id)
+    if is_registered:
+      handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
+      return handler.is_task_visible(task_id)
     else:
       return False
   except Contest.DoesNotExist:
