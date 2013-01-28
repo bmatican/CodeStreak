@@ -104,6 +104,10 @@ function submitTask(task_no) {
         var message = "Answer accepted. Well done! Loading next exercise.";
         var message_style = "text-success";
         var doReload = true;
+      } else if(feedback.verdict == 'wrong-answer') {
+        var message = "Wrong Answer";
+        var message_style = "text-error";
+        var doReaload = false;
       }
       response.append('&nbsp;<p id="responsemessage' + task_no + 
                       '" class="'+message_style+'" style="display:none">' + 

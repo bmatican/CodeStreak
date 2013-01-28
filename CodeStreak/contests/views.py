@@ -204,10 +204,18 @@ def getScores(user, payload):
             'scores' : 'scores',
          }
 
+def isOperationAllowed(contest_id, task_id, user_id):
+  return true
+
 def submitTask(user, payload):
-  return {
-            'verdict'   : 'success'
-         }
+  
+  try:
+    great_success = Task.check_output(payload.get('task_no'), payload.get('answer'))
+    return {
+             'verdict'   : ('success' if great_success else 'wrong-answer')
+           }
+  except:
+    return {}
 
 data_providers = {
   'getScores' : getScores,
