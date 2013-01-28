@@ -110,16 +110,14 @@ class :cs:task-show(:x:element):
       task = self.getAttribute('task')
       page = \
       <div>
-        <blockquote>
-          <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
-          <strong>Problem</strong>
-          <p>{ task.text } </p><br />
-          { <div>
-              <strong>Input</strong> <br />
-              <code>{task.input}</code>
-            </div>
-            if task.input else <x:frag />}
-        </blockquote>
+        <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
+        <strong>Problem</strong>
+        <p>{ task.text } </p>
+        { <div>
+            <strong>Input</strong> <br />
+            <code>{task.input}</code> <br /><br />
+          </div>
+          if task.input else <x:frag />}
         <table><tr><td>
           <div class="input-append">
             <input class="span2" id={"taskanswer"+str(task.id)} type="text"
@@ -142,7 +140,13 @@ class :cs:contest-problem-set(:x:element):
     children empty
 
     def render(self):
-        response = <div class="accordion" id="accordion2"></div>
+        task_content = <div class="tab-content"></div>
+        task_nav = <ul class="nav nav-tabs"></ul>
+        response = \
+        <div class="tabbable tabs-left">
+          {task_nav}
+          {task_content}
+        </div>
 
         ordered_tasks = self.getAttribute('ordered_tasks')
         task_by_id = self.getAttribute('task_by_id')
@@ -169,23 +173,21 @@ class :cs:contest-problem-set(:x:element):
                         score.score, score.format_tries())
             task_url = url_reverse('task-view', args=(task.id,))
 
-            response.appendChild(
-              <div class="accordion-group">
-                <div class="accordion-heading">
-                   { ' ' }{badge} { ' ' }
-                  <a data-toggle="collapse"
-                      data-parent="#accordion2" href={"#collapse" + str(cnt+1)}>
-                    {task.name }
+            short_name = task.name
+            if len(task.name) > 20:
+              task.name=task.name[0:18] + '...'
+            task_nav.appendChild(
+                <li class={'active' if cnt==0 else ''}>
+                  <a data-toggle="tab" href={"#task_tab" + str(cnt+1)}>
+                    {badge} {' '}
+                    {task.name}
                   </a>
-                </div>
-                <div id={"collapse" + str(cnt+1)} class="accordion-body collapse in">
-                  <div class="accordion-inner">
+                </li>)
+            task_content.appendChild(
+                <div id={"task_tab" + str(cnt+1)}
+                     class={"tab-pane active" if cnt == 0 else "tab-pane" }>
                     <cs:task-show task={task} />
-                  </div>
-                </div>
-              </div>
-
-            )
+                </div>)
 
         return response
 

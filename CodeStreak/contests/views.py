@@ -60,6 +60,8 @@ def view_task(request, task_id):
 
   return HttpResponse(str(page))
 
+
+# TODO: Display all tasks if contest is over.
 @login_required
 def contest_home(request, contest_id):
   try:
