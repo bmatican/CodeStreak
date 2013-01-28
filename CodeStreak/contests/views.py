@@ -89,31 +89,18 @@ def contest_home(request, contest_id):
   user_id = request.user.id
   try:
     handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
-    scores = handler.scores
   except Score.DoesNotExist:
     raise Http404
   except Contest.DoesNotExist:
     raise Http404
 
-  task_by_id = {}
-  score_by_task_id = {}
-  for score in scores:
-    task_by_id[score.task.id] = score.task
-    score_by_task_id[score.task.id] = score
-
-  ordered_tasks = handler.get_visible_tasks()
-  if len(ordered_tasks) > 0:
-    _, task_id = ordered_tasks[-1]
-    if task_id not in task_by_id:
-      task_by_id[task_id] = Task.get_task(task_id)
-
   content.appendChild(
       <cs:contest-problem-set
         contest={contest}
-        ordered_tasks={ordered_tasks}
-        task_by_id={task_by_id}
+        ordered_tasks={handler.get_visible_tasks()}
+        task_by_id={handler.task_by_id}
         task_id={task_id_display}
-        score_by_task_id={score_by_task_id} />)
+        score_by_task_id={handler.score_by_task_id} />)
 
   return HttpResponse(str(page))
 
@@ -210,7 +197,7 @@ def can_submit_task(contest_id, user_id, task_id):
     is_registered = contest.is_user_registered(user_id)
     if is_registered:
       handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
-      return handler.is_task_visible(task_id)
+      return handler.is_task_solvable(task_id)
     else:
       return False
   except Contest.DoesNotExist:
@@ -218,50 +205,57 @@ def can_submit_task(contest_id, user_id, task_id):
 
 
 def submitTask(user, payload):
+  fail = {}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
     answer = payload.get('answer')
 
-    #FIXME: check if operation allowed    
+    if can_submit_task(contest_id, user.id, task_id):
+      great_success = Task.check_output(task_id, answer)
 
-    great_success = Task.check_output(task_id, answer)
-
-    response = None
-    if (great_success):
-      Score.solve_task(contest_id, user.id, task_id)
-      # add actual state.
-      response = {
-                   'verdict' : 'success'
-                 }
+      response = None
+      if great_success:
+        Score.solve_task(contest_id, user.id, task_id)
+        # add actual state.
+        response = {
+                     'verdict' : 'success'
+                   }
+      else:
+        Score.fail_task(contest_id, user.id, task_id)
+        response = {
+                     'verdict' : 'wrong-answer'
+                   }
+      return response
     else:
-      Score.fail_task(contest_id, user.id, task_id)
-      response = {
-                   'verdict' : 'wrong-answer'
-                 }
-    return response
+      return fail
   except:
-    return {}
+    return fail
+
 
 def skipTask(user, payload):
+  fail = {}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
 
-    #FIXME: check if operation allowed.
-
-    Score.skip_task(contest_id, user.id, task_id)
-    
-    return {
-             'verdict' : 'skipped'
-           }
+    if can_submit_task(contest_id, user.id, task_id):
+      Score.skip_task(contest_id, user.id, task_id)
+      
+      return {
+               'verdict' : 'skipped'
+             }
+    else:
+      return fail
   except:
-    return {}
+    return fail
+
 
 data_providers = {
   'skipTask' : skipTask,
   'submitTask' : submitTask,
 }
+
 
 @require_POST
 @login_required

@@ -38,15 +38,18 @@ class Score(models.Model):
   @transaction.commit_on_success
   def solve_task(cls, contest_id, user_id, task_id):
     entry = cls._get_entry(contest_id, user_id, task_id)
-    if entry.skipped == True:
-      score = cls.SKIPPED
+    if entry.can_solve():
+      if entry.skipped == True:
+        score = cls.SKIPPED
+      else:
+        score = cls.FULL
+      entry.score = score
+      entry.solved = True
+      cls._try_task(entry)
+      Participation.update_score(contest_id, user_id, score)
+      LogEntry.solve_task(contest_id, user_id, task_id)
     else:
-      score = cls.FULL
-    entry.score = score
-    entry.solved = True
-    cls._try_task(entry)
-    Participation.update_score(contest_id, user_id, score)
-    LogEntry.solve_task(contest_id, user_id, task_id)
+      raise IntegrityError
 
   @classmethod
   @transaction.commit_on_success
@@ -59,9 +62,12 @@ class Score(models.Model):
   @transaction.commit_on_success
   def skip_task(cls, contest_id, user_id, task_id):
     entry = cls._get_entry(contest_id, user_id, task_id)
-    entry.skipped = True
-    entry.save()
-    LogEntry.skip_task(contest_id, user_id, task_id)
+    if entry.can_skip():
+      entry.skipped = True
+      entry.save()
+      LogEntry.skip_task(contest_id, user_id, task_id)
+    else:
+      raise IntegrityError
 
   @classmethod
   def get_scores(cls, contest_id, user_id, with_tasks=True):
@@ -74,6 +80,12 @@ class Score(models.Model):
           'task',
       )
     return obj
+
+  def can_solve(self):
+    return not self.solved
+
+  def can_skip(self):
+    return not self.skipped and self.can_solve()
 
   def format_tries(self):
     return '{} {}'.format(
