@@ -1,6 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.shortcuts import render_to_response
@@ -226,3 +227,18 @@ def data_provider(request, action):
       return HttpResponse(json.dumps(response))
   else:
     raise Http404
+
+@login_required
+@staff_member_required
+def logs(request, contest_id):
+  output = ''
+  output += 'Logs for contest {}'.format(contest_id)
+  try:
+    entries = LogEntry.get_all_entries(contest_id)
+    output += '<ul>'
+    for e in entries:
+      output += '<li>{}</li>'.format(e)
+    output += '</ul>'
+  except:
+    raise Http404
+  return HttpResponse(str(output))

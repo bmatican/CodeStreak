@@ -9,8 +9,8 @@ from CodeStreak.contests.models.task import Task
 class Contest(models.Model):
   CACHE_PREFIX = 'contest'
   name = models.CharField(max_length=128)
-  start_date = models.DateTimeField(null=True, blank=True, default=None)
-  end_date = models.DateTimeField(null=True, blank=True, default=None)
+  start_date = models.DateTimeField()
+  end_date = models.DateTimeField()
   paused = models.BooleanField(default=False)
   registered_users = models.ManyToManyField(
       User,
@@ -30,8 +30,9 @@ class Contest(models.Model):
       offset = 0
     if limit == None:
       limit = 30
+    start = int(offset)
     end = int(offset) + int(limit)
-    return cls.objects.all()[offset:end]
+    return cls.objects.all()[start:end]
 
   @classmethod
   def get_contest(cls, contest_id):

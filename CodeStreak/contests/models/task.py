@@ -16,7 +16,7 @@ class Task(models.Model):
   name = models.CharField(max_length=128)
   text = models.TextField()
   difficulty = models.IntegerField(choices=DIFFICULTIES, default=UNASSIGNED)
-  input = models.TextField()
+  input = models.TextField(blank=True, null=True, default=None)
   output = models.TextField()
 
   @classmethod
