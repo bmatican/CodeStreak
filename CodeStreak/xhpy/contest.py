@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse as url_reverse
 from django.utils.timezone import now
 
 from CodeStreak.xhpy.base import *
-from CodeStreak.contests.models import Score, Participation
+from CodeStreak.contests.models import Score, Participation, LogEntry
 from CodeStreak.contests.utils.tasks import InvalidProblemOrderingException
 
 
@@ -60,7 +60,7 @@ class :cs:header-contest(:cs:header):
                     {content}
                 </cs:header-link>)
         if user.is_staff:
-          content = 'Logs'
+          content = 'Activity Log'
           link = url_reverse('contest-logs', args=(contest.id,))
           prepended_children.appendChild(
               <cs:header-link
@@ -233,10 +233,6 @@ class :cs:contest-rankings(:x:element):
 
         for participation in rankings:
             user = participation.user
-            if user.first_name and user.last_name:
-                user_displayname = user.first_name + ' ' + user.last_name
-            else:
-                user_displayname = user.username
             score = participation.score
 
             task_scores = <x:frag />
@@ -273,7 +269,7 @@ class :cs:contest-rankings(:x:element):
                 task_scores.appendChild(<td class="task-score">{xhp}</td>)
             tbody.appendChild(
                 <tr>
-                    <td>{user_displayname}</td>
+                    <td><cs:user user={user} /></td>
                     {task_scores}
                     <td>{score}</td>
                 </tr>)
@@ -281,6 +277,47 @@ class :cs:contest-rankings(:x:element):
         return table
 
 
+class :cs:log-entry(:x:element):
+    attribute LogEntry entry @required
+
+    def render(self):
+        entry = self.getAttribute('entry')
+
+        user_information = '-'
+        if entry.user:
+            user_information = <cs:user user={entry.user} />
+
+        log_information = 'Unexpected log entry type'
+        if entry.type == LogEntry.CONTEST_STARTED:
+            log_information = 'Started contest'
+        elif entry.type == LogEntry.CONTEST_PAUSED:
+            log_information = 'Paused contest'
+        elif entry.type == LogEntry.CONTEST_RESUMED:
+            log_information = 'Resumed contest'
+        elif entry.type == LogEntry.CONTEST_ENDED:
+            log_information = 'Stopped contest'
+        elif entry.type == LogEntry.TASK_PASSED:
+            log_information = \
+                'Has passed task {} - needs to take a shot'.format(
+                    entry.task.name)
+        elif entry.type == LogEntry.TASK_FAILED:
+            log_information = \
+                'Has made an unsuccessful attempt at task {}'.format(
+                    entry.task.name)
+        elif entry.type == LogEntry.TASK_SKIPPED:
+            log_information = \
+                'Has skipped task {} - needs to take a shot'.format(
+                    entry.task.name)
+
+        return \
+        <div class="log-entry row-fluid">
+          <div class="span3">{entry.time}</div>
+          <div class="span2">{user_information}</div>
+          <div class="span7">{log_information}</div>
+        </div>
+
+
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
            "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
-           "xhpy_cs__contest_rankings", "xhpy_cs__task_show"]
+           "xhpy_cs__contest_rankings", "xhpy_cs__task_show",
+           "xhpy_cs__log_entry"]

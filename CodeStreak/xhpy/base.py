@@ -93,23 +93,11 @@ class :cs:header(:x:element):
     def render(self):
         user = self.getAttribute('user')
         end_timestamp = self.getAttribute('end_timestamp')
-        fb_image = None
-        user_displayname = None
         if user.is_authenticated():
-            if user.first_name and user.last_name:
-                user_displayname = user.first_name + ' ' + user.last_name
-            else:
-                user_displayname = user.username
-            fb_user = FacebookProfile.objects.filter(user_id = user.id)
-            if len(fb_user) > 0 and fb_user[0].image:
-                fb_image = fb_user[0].image.url
-
             user_info = \
             <li class="dropdown">
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                    {user_displayname}
-                    {<img class="navbar-img" src={fb_image} />
-                      if fb_image else <x:frag />}
+                    <cs:user user={user} />
                 </a>
                 <ul class="dropdown-menu" role="menu">
                     <li>
@@ -241,3 +229,27 @@ class :cs:footer(:x:element):
                 </p>
             </footer>
         </x:frag>
+
+
+class :cs:user(:x:element):
+    attribute object user @required
+    children empty
+
+    def render(self):
+        user = self.getAttribute('user')
+        if user.first_name and user.last_name:
+            user_displayname = user.first_name + ' ' + user.last_name
+        else:
+            user_displayname = user.username
+        fb_user = FacebookProfile.objects.filter(user_id = user.id)
+        if len(fb_user) > 0 and fb_user[0].image:
+            fb_image = fb_user[0].image.url
+        else:
+            fb_image = None
+
+        return \
+        <span class="user">
+            {<img class="user-img" src={fb_image} />
+              if fb_image else <x:frag />}
+            {user_displayname}
+        </span>

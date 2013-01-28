@@ -71,7 +71,7 @@ def contest_home(request, contest_id):
   task_id_display = request.GET.get('task_id', -1)
 
   title = 'CodeStreak - {}'.format(contest.name)
-  content = <div />
+  content = <div class="contest-problem-set" />
   page = \
   <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-home" />
@@ -128,7 +128,7 @@ def contest_ranking(request, contest_id):
   offset = request.GET.get('offset')
 
   title = 'CodeStreak - {}'.format(contest.name)
-  content = <div />
+  content = <div class="contest-rankings" />
   page = \
   <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-ranking" />
@@ -211,7 +211,6 @@ def isOperationAllowed(contest_id, task_id, user_id):
   return true
 
 def submitTask(user, payload):
-  
   try:
     great_success = Task.check_output(payload.get('task_no'), payload.get('answer'))
     return {
@@ -243,18 +242,34 @@ def data_provider(request, action):
   else:
     raise Http404
 
+
 @login_required
 @staff_member_required
 def logs(request, contest_id):
-  output = ''
-  output += 'Logs for contest {}'.format(contest_id)
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  title = 'CodeStreak - {} activity log'.format(contest.name)
+
+  content = <div class="contest-activity-log" />
+  page = \
+  <cs:page request={request} title={title}>
+    <cs:header-contest contest={contest} active_tab="contest-logs" />
+    <cs:content>
+      <h2>{'{} Activity Log'.format(contest.name)}</h2>
+      {content}
+    </cs:content>
+    <cs:footer />
+  </cs:page>
+
   try:
     entries = LogEntry.get_all_entries(contest_id)
-    output += '<ul>'
-    for e in entries:
-      output += '<li>{}</li>'.format(e)
-    output += '</ul>'
   except:
     raise Http404
 
-  return HttpResponse(str(output))
+  for entry in entries:
+    content.appendChild(<cs:log-entry entry={entry} />)
+
+  return HttpResponse(str(page))

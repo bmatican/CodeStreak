@@ -35,7 +35,7 @@ class LogEntry(models.Model):
     start = int(offset)
     end = int(offset) + int(limit)
     return cls.objects.all()[start:end]
- 
+
   @classmethod
   def _make_contest_entry(cls, contest_id, type):
     cls.objects.create(
