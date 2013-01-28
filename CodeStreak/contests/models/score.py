@@ -4,6 +4,7 @@ from datetime import datetime
 
 from CodeStreak.contests.models.task import Task
 from CodeStreak.contests.models.contest import Contest
+from CodeStreak.contests.models.log_entry import LogEntry
 
 class Score(models.Model):
   SKIPPED = 0.5
@@ -42,17 +43,22 @@ class Score(models.Model):
     entry.solved = True
     cls._try_task(entry)
     Participation.update_score(contest_id, user_id, score)
+    LogEntry.fail_task(contest_id, user_id, task_id)
 
   @classmethod
+  @transaction.commit_on_success
   def fail_task(cls, contest_id, user_id, task_id):
     entry = cls._get_entry(contest_id, user_id, task_id)
     cls._try_task(entry)
+    LogEntry.fail_task(contest_id, user_id, task_id)
 
   @classmethod
+  @transaction.commit_on_success
   def skip_task(cls, contest_id, user_id, task_id):
     entry = cls._get_entry(contest_id, user_id, task_id)
     entry.skipped = True
     entry.save()
+    LogEntry.skip_task(contest_id, user_id, task_id)
 
   @classmethod
   def get_scores(cls, contest_id, user_id, with_tasks=True):

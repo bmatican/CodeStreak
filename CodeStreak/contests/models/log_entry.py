@@ -1,9 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from CodeStreak.contests.models.contest import Contest
-from CodeStreak.contests.models.task import Task
-
 class LogEntry(models.Model):
   CONTEST_STARTED = 1
   CONTEST_PAUSED = 2
@@ -22,12 +19,12 @@ class LogEntry(models.Model):
     (TASK_SKIPPED, 'Task skipped'),
   )
 
-  contest = models.ForeignKey(Contest)
+  contest = models.ForeignKey('Contest')
   time = models.DateTimeField(auto_now_add=True)
   type = models.IntegerField(choices=EVENTS)
   user = models.ForeignKey(User, blank=True, null=True,
                            related_name='contest_log_entry_set')
-  task = models.ForeignKey(Task, blank=True, null=True)
+  task = models.ForeignKey('Task', blank=True, null=True)
 
   @classmethod
   def get_all_entries(cls, contest_id, offset=None, limit=None):
@@ -57,32 +54,31 @@ class LogEntry(models.Model):
 
   @classmethod
   def start_contest(cls, contest_id):
-    _make_contest_entry(cls, contest_id, CONTEST_STARTED)
-
+    cls._make_contest_entry(contest_id, cls.ONTEST_STARTED)
 
   @classmethod
   def end_contest(cls, contest_id):
-    _make_contest_entry(cls, contest_id, CONTEST_ENDED)
+    cls._make_contest_entry(contest_id, cls.CONTEST_ENDED)
 
   @classmethod
   def pause_contest(cls, contest_id):
-    _make_contest_entry(cls, contest_id, CONTEST_PAUSED)
+    cls._make_contest_entry(contest_id, cls.CONTEST_PAUSED)
 
   @classmethod
   def resume_contest(cls, contest_id):
-    _make_contest_entry(cls, contest_id, CONTEST_RESUMED)
+    cls._make_contest_entry(contest_id, cls.CONTEST_RESUMED)
 
   @classmethod
   def solve_task(cls, contest_id, user_id, task_id):
-    _make_task_entry(cls, contest_id, TASK_PASSED, user_id, task_id)
+    cls._make_task_entry(contest_id, cls.TASK_PASSED, user_id, task_id)
 
   @classmethod
   def skip_task(cls, contest_id, user_id, task_id):
-    _make_task_entry(cls, contest_id, TASK_SKIPPED, user_id, task_id)
+    cls._make_task_entry(contest_id, cls.TASK_SKIPPED, user_id, task_id)
 
   @classmethod
   def fail_task(cls, contest_id, user_id, task_id):
-    _make_task_entry(cls, contest_id, TASK_FAILED, user_id, task_id)
+    cls._make_task_entry(contest_id, cls.TASK_FAILED, user_id, task_id)
 
   def __unicode__(self):
     if self.user_id != None:

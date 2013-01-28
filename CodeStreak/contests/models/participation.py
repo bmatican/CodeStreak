@@ -1,12 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from CodeStreak.contests.models.task import Task
-from CodeStreak.contests.models.contest import Contest
-from CodeStreak.contests.models.score import Score
-
 class Participation(models.Model):
-  contest = models.ForeignKey(Contest)
+  contest = models.ForeignKey('Contest')
   user = models.ForeignKey(User)
   score = models.FloatField(default=0, db_index=True)
 

@@ -245,4 +245,5 @@ def logs(request, contest_id):
     output += '</ul>'
   except:
     raise Http404
+
   return HttpResponse(str(output))

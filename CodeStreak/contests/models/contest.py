@@ -5,6 +5,7 @@ from django.utils.timezone import now
 from django.core.cache import cache
 
 from CodeStreak.contests.models.task import Task
+from CodeStreak.contests.models.log_entry import LogEntry
 
 class Contest(models.Model):
   CACHE_PREFIX = 'contest'
@@ -19,7 +20,7 @@ class Contest(models.Model):
       through='Participation',
   )
   assigned_tasks = models.ManyToManyField(
-      Task,
+      'Task',
       related_name='assigned_contests',
       blank=True
   )
@@ -70,18 +71,22 @@ class Contest(models.Model):
   def start(self):
     self.start_date = now()
     self.save()
+    LogEntry.start_contest(self.id)
 
   def stop(self):
     self.end_date = now()
     self.save()
+    LogEntry.stop_contest(self.id)
 
   def pause(self):
     self.paused = True
     self.save()
+    LogEntry.pause_contest(self.id)
 
   def resume(self):
     self.paused = False
     self.save()
+    LogEntry.resume_contest(self.id)
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)
