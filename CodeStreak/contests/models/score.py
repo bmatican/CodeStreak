@@ -43,7 +43,7 @@ class Score(models.Model):
     entry.solved = True
     cls._try_task(entry)
     Participation.update_score(contest_id, user_id, score)
-    LogEntry.fail_task(contest_id, user_id, task_id)
+    LogEntry.solve_task(contest_id, user_id, task_id)
 
   @classmethod
   @transaction.commit_on_success

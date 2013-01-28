@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 
 from django.utils.timezone import now
@@ -68,21 +68,25 @@ class Contest(models.Model):
     task = Task.objects.get(id=task_id)
     self.assigned_tasks.add(task)
 
+  @transaction.commit_on_success
   def start(self):
     self.start_date = now()
     self.save()
     LogEntry.start_contest(self.id)
 
+  @transaction.commit_on_success
   def stop(self):
     self.end_date = now()
     self.save()
     LogEntry.stop_contest(self.id)
 
+  @transaction.commit_on_success
   def pause(self):
     self.paused = True
     self.save()
     LogEntry.pause_contest(self.id)
 
+  @transaction.commit_on_success
   def resume(self):
     self.paused = False
     self.save()
