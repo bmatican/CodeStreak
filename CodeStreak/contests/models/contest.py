@@ -53,6 +53,10 @@ class Contest(models.Model):
       cache.set(cache_key, tasks)
     return tasks
 
+  def is_user_registered(self, user_id):
+    # TODO: hack?
+    return (user_id,) in self.registered_users.values_list('id')
+
   def get_registered_user_count(self):
     return self.registered_users.count()
 

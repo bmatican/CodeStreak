@@ -60,6 +60,7 @@ def view_task(request, task_id):
 
   return HttpResponse(str(page))
 
+
 # TODO: Display all tasks if contest is over.
 @login_required
 def contest_home(request, contest_id):
@@ -87,28 +88,23 @@ def contest_home(request, contest_id):
 
   user_id = request.user.id
   try:
-    scores = Score.get_scores(contest_id, user_id)
-    indexed_task_ids = Contest.get_task_ordering(contest_id)
+    handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
+    scores = handler.scores
   except Score.DoesNotExist:
     raise Http404
   except Contest.DoesNotExist:
     raise Http404
 
-  done_task_ids = []
   task_by_id = {}
   score_by_task_id = {}
   for score in scores:
     task_by_id[score.task.id] = score.task
     score_by_task_id[score.task.id] = score
-    if score.solved or score.skipped:
-        done_task_ids.append(score.task.id)
 
-  handler = TaskVisibilityHandler(done_task_ids, indexed_task_ids)
   ordered_tasks = handler.get_visible_tasks()
-  for p, task_id in ordered_tasks:
+  if len(ordered_tasks) > 0:
+    _, task_id = ordered_tasks[-1]
     if task_id not in task_by_id:
-      # Should only ever happen once, for the next task the user needs
-      # to attempt
       task_by_id[task_id] = Task.get_task(task_id)
 
   content.appendChild(
@@ -207,11 +203,18 @@ def getScores(user, payload):
             'scores' : 'scores',
          }
 
+
 def isOperationAllowed(contest_id, task_id, user_id):
-  # check if user logged in
-  # check if user registered
-  # check if task visible
-  return true
+  try:
+    contest = Contest.get_contest(contest_id)
+    if contest.is_user_registered(user_id):
+      # check if task visible
+      return True
+    else:
+      return False
+  except Contest.DoesNotExist:
+    return False
+
 
 def submitTask(user, payload):
   try:
@@ -259,10 +262,12 @@ data_providers = {
   'submitTask' : submitTask,
 }
 
+@require_POST
+@login_required
 def data_provider(request, action):
   print 'here'
   global data_providers
-  if request.is_ajax() and request.method == 'POST':
+  if request.is_ajax():
     payload = json.loads(request.POST.get('payload', ''))
     response = None
     if action in data_providers:
