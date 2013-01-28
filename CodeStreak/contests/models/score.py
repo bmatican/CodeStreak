@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -20,8 +20,8 @@ class Score(models.Model):
   @classmethod
   def _get_entry(cls, contest_id, user_id, task_id):
     return cls.objects.get(
-        contest__id=contest_id, 
-        user__id=user_id, 
+        contest__id=contest_id,
+        user__id=user_id,
         task__id=task_id,
     )
 
@@ -31,6 +31,7 @@ class Score(models.Model):
     entry.save()
 
   @classmethod
+  @transaction.commit_on_success
   def solve_task(cls, contest_id, user_id, task_id):
     entry = cls._get_entry(contest_id, user_id, task_id)
     if entry.skipped == True:
@@ -40,6 +41,7 @@ class Score(models.Model):
     entry.score = score
     entry.solved = True
     cls._try_task(entry)
+    Participation.update_score(contest_id, user_id, score)
 
   @classmethod
   def fail_task(cls, contest_id, user_id, task_id):
@@ -53,13 +55,21 @@ class Score(models.Model):
     entry.save()
 
   @classmethod
-  def get_scores(cls, contest_id, user_id):
-    return cls.objects.select_related(
-      'task',
-    ).filter(
+  def get_scores(cls, contest_id, user_id, with_tasks=True):
+    obj = cls.objects.filter(
         contest__id=contest_id,
         user__id=user_id
     ).order_by('task')
+    if with_tasks:
+      obj = obj.select_related(
+          'task',
+      )
+    return obj
+
+  def format_tries(self):
+    return '{} {}'.format(
+        self.tries,
+        'try' if self.tries == 1 else 'tries')
 
   def __unicode__(self):
     return u'Score for contest_id={0}, user_id={1}, task_id={2}'.format(

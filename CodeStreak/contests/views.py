@@ -57,7 +57,7 @@ def view_task(request, task_id):
     <cs:footer />
   </cs:page>
 
-  return HttpResponse(str(page)) 
+  return HttpResponse(str(page))
 
 @login_required
 def contest_home(request, contest_id):
@@ -119,9 +119,11 @@ def contest_ranking(request, contest_id):
     contest = Contest.get_contest(contest_id)
   except Contest.DoesNotExist:
     raise Http404
+  limit = request.GET.get('limit')
+  offset = request.GET.get('offset')
 
   title = 'CodeStreak - {}'.format(contest.name)
-  content = <pre />
+  content = <div />
   page = \
   <cs:page request={request} title={title}>
     <cs:header-contest contest={contest} active_tab="contest-ranking" />
@@ -132,23 +134,12 @@ def contest_ranking(request, contest_id):
     <cs:footer />
   </cs:page>
 
-  tasks = contest.assigned_tasks.all()
-  users = contest.registered_users.all()
-
-  output = ''
-  output += '<p>{}</p>'.format(contest)
-  output += '<p>Tasks</p>'
-  output += '<ul>'
-  for t in tasks:
-    output += '<li>{}</li>'.format(t)
-  output += '</ul>'
-
-  output += '<p>Users</p>'
-  output += '<ul>'
-  for u in users:
-    output += '<li>{}</li>'.format(u)
-  output += '</ul>'
-  content.appendChild(output)
+  rankings = Participation.get_rankings(contest.id, limit, offset)
+  content.appendChild(
+      <cs:contest-rankings
+        contest={contest}
+        tasks={contest.assigned_tasks.all()}
+        rankings={rankings} />)
 
   return HttpResponse(str(page))
 
@@ -209,8 +200,7 @@ def getScores(user, payload):
          }
 
 def submitTask(user, payload):
-  
-  return { 
+  return {
             'verdict'   : 'success'
          }
 

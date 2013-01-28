@@ -3,7 +3,8 @@ from django.core.urlresolvers import reverse as url_reverse
 from django.utils.timezone import now
 
 from CodeStreak.xhpy.base import *
-from CodeStreak.contests.models import Participation
+from CodeStreak.contests.models import Score, Participation
+from CodeStreak.contests.utils.tasks import InvalidProblemOrderingException
 
 
 class :cs:header-home(:cs:header):
@@ -149,11 +150,14 @@ class :cs:contest-problem-set(:x:element):
                 elif score.skipped:
                     badge = <span class="label label-warning">Skipped</span>
                 else:
-                    badge = <span class="label label-error">Contact Admins</span>
+                    # Wrong answer on previous attempts
+                    badge = \
+                    <span class="label label-important">
+                        Wrong answer
+                    </span>
 
-                score_str = '{} ({} {})'.format(score.score,
-                        score.tries,
-                        'try' if score.tries == 1 else 'tries')
+                score_str = '{} ({})'.format(
+                        score.score, score.format_tries())
             task_url = url_reverse('task-view', args=(task.id,))
 
             response.appendChild(
@@ -177,6 +181,90 @@ class :cs:contest-problem-set(:x:element):
         return response
 
 
+class :cs:contest-rankings(:x:element):
+    attribute object contest @required,
+              list tasks @required,
+              list rankings @required
+
+    def render(self):
+        contest = self.getAttribute('contest')
+        tasks = self.getAttribute('tasks')
+        rankings = self.getAttribute('rankings')
+
+        header_tasks = <x:frag />
+        for task in tasks:
+            task_url = '{}?task_id={}'.format(
+                url_reverse('contest-home', args=(contest.id,)), task.id)
+            header_tasks.appendChild(
+                <th class="task-score">
+                    <a href={task_url} rel="tooltip" title={task.name}>
+                        {task.id}
+                    </a>
+                </th>)
+
+        tbody = <tbody />
+        table = \
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    {header_tasks}
+                    <th>Score</th>
+                </tr>
+            </thead>
+            {tbody}
+        </table>
+
+        for participation in rankings:
+            user = participation.user
+            if user.first_name and user.last_name:
+                user_displayname = user.first_name + ' ' + user.last_name
+            else:
+                user_displayname = user.username
+            score = participation.score
+
+            task_scores = <x:frag />
+            scores_per_task = Score.get_scores(contest.id, user.id)
+            for task in tasks:
+                if len(scores_per_task):
+                    if scores_per_task[0].task_id != task.id:
+                        raise InvalidProblemOrderingException
+                    task_score = scores_per_task[0]
+                    scores_per_task = scores_per_task[1:]
+                else:
+                    task_score = None
+
+                if task_score == None:
+                    xhp = <span class="badge">-</span>
+                elif task_score.solved:
+                    xhp = \
+                    <x:frag>
+                        <span class="badge badge-success">
+                            {'{} ({})'.format(task_score.score,
+                                task_score.format_tries())}
+                        </span>
+                    </x:frag>
+                elif task_score.skipped:
+                    xhp = \
+                    <span class="badge badge-warning">
+                        SK
+                    </span>
+                else:
+                    xhp = \
+                    <span class="badge badge-important">
+                        WA ({task_score.format_tries()})
+                    </span>
+                task_scores.appendChild(<td class="task-score">{xhp}</td>)
+            tbody.appendChild(
+                <tr>
+                    <td>{user_displayname}</td>
+                    {task_scores}
+                    <td>{score}</td>
+                </tr>)
+
+        return table
+
+
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
            "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
-           "xhpy_cs__task_show"]
+           "xhpy_cs__contest_rankings", "xhpy_cs__task_show"]

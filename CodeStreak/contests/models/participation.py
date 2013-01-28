@@ -8,7 +8,7 @@ from CodeStreak.contests.models.score import Score
 class Participation(models.Model):
   contest = models.ForeignKey(Contest)
   user = models.ForeignKey(User)
-  score = models.FloatField(default=0)
+  score = models.FloatField(default=0, db_index=True)
 
   @classmethod
   def get_entry(cls, contest_id, user_id):
@@ -30,16 +30,24 @@ class Participation(models.Model):
     cls.get_entry(contest_id, user_id).delete()
 
   @classmethod
-  def solve_full(cls, contest_id, user_id):
+  def update_score(cls, contest_id, user_id, add_score):
     entry = cls.get_entry(contest_id, user_id)
-    entry.score = Score.FULL
+    entry.score += add_score
     entry.save()
 
   @classmethod
-  def solve_skipped(cls, contest_id, user_id):
-    entry = cls.get_entry(contest_id, user_id)
-    entry.score = Score.FULL
-    entry.save()
+  def get_rankings(cls, contest_id, limit=None, offset=None):
+    if offset == None:
+      offset = 0
+    if limit == None:
+      limit = 30
+    end = int(offset) + int(limit)
+
+    return cls.objects.select_related(
+        'user',
+    ).filter(
+        contest__id=contest_id,
+    ).order_by('-score')[offset:end]
 
   def __unicode__(self):
     return u'Participation for contest_id={}, user_id={}'.format(
