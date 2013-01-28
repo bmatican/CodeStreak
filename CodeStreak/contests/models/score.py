@@ -5,6 +5,7 @@ from datetime import datetime
 from CodeStreak.contests.models.task import Task
 from CodeStreak.contests.models.contest import Contest
 from CodeStreak.contests.models.log_entry import LogEntry
+from CodeStreak.contests.models.participation import Participation
 
 class Score(models.Model):
   SKIPPED = 0.5
@@ -21,11 +22,10 @@ class Score(models.Model):
   @classmethod
   def _get_entry(cls, contest_id, user_id, task_id):
     args = {
-      'contest__id' : contest_id,
-      'user__id' : user_id,
-      'task__id' : task_id,
+      'contest_id' : contest_id,
+      'user_id' : user_id,
+      'task_id' : task_id,
     }
-
     obj, created = cls.objects.get_or_create(**args)
     return obj
 

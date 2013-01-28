@@ -247,7 +247,6 @@ def data_provider(request, action):
 @staff_member_required
 def logs(request, contest_id):
   output = ''
-
   output += 'Logs for contest {}'.format(contest_id)
   try:
     entries = LogEntry.get_all_entries(contest_id)
