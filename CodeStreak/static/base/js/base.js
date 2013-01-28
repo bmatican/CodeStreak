@@ -83,6 +83,38 @@ function pullData(action_x, payload_x, callback ) {
 
 }
 
+
+function taskCallback(feedback, task_no) {
+  setTimeout(function() {
+    button=$('#answerbutton'+task_no);
+    response = $('#taskresponse'+task_no);
+    button.button('reset');
+    if (feedback.verdict == 'success') {
+      var message = "Answer accepted. Well done! Loading next exercise...";
+      var message_style = "text-success";
+      var doReload = true;
+    } else if(feedback.verdict == 'wrong-answer') {
+      var message = "Wrong Answer";
+      var message_style = "text-error";
+      var doReaload = true;
+    } else if(feedback.verdict == 'skipped') {
+      var message = "Task skipped. Loading next exercise..."
+      var message_style = "text-warning"
+      var doReload = true;
+    }
+    response.append('&nbsp;<p id="responsemessage' + task_no + 
+                    '" class="'+message_style+'" style="display:none">' + 
+                    message + '</p>');
+    response_message = $('#responsemessage' + task_no);
+    response_message.fadeIn('slow', function() {
+      setTimeout(function() {
+        response_message.fadeOut('slow', null);
+        if (doReload) document.location.reload(true);
+      }, 3000);
+    });
+  }, 500);
+}
+
 function submitTask(task_no) {
   var answer = $('#taskanswer'+task_no).val();
   response = $('#taskresponse'+task_no);
@@ -94,31 +126,22 @@ function submitTask(task_no) {
   }
   button.button('loading');
   var data = {
-               'task_no' : task_no,
-               'answer' : '' + answer
+               'task_id' : task_no,
+               'answer' : '' + answer,
+               'contest_id' : contestId
              }
   pullData('submitTask', data, function(feedback) {
-    setTimeout(function() {
-      button.button('reset');
-      if (feedback.verdict == 'success') {
-        var message = "Answer accepted. Well done! Loading next exercise.";
-        var message_style = "text-success";
-        var doReload = true;
-      } else if(feedback.verdict == 'wrong-answer') {
-        var message = "Wrong Answer";
-        var message_style = "text-error";
-        var doReaload = false;
-      }
-      response.append('&nbsp;<p id="responsemessage' + task_no + 
-                      '" class="'+message_style+'" style="display:none">' + 
-                      message + '</p>');
-      response_message = $('#responsemessage' + task_no);
-      response_message.fadeIn('slow', function() {
-        setTimeout(function() {
-          response_message.fadeOut('slow', null);
-          if (doReload) document.location.reload(true);
-        }, 3000);
-      });
-    }, 500);
+    taskCallback(feedback, task_no)
+  });
+}
+
+function skipTask(task_id) {
+  console.log("t: ", task_id)
+  var data = {
+               'task_id' : task_id,
+               'contest_id' : contestId
+             }
+  pullData('skipTask', data, function(feedback) {
+    taskCallback(feedback, task_id);
   });
 }

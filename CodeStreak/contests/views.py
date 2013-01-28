@@ -78,6 +78,9 @@ def contest_home(request, contest_id):
     <cs:content>
       <h2>{'{} Problem Set'.format(contest.name)}</h2>
       {content}
+      <script>
+        {'var contestId=' + contest_id + ";"}
+      </script>
     </cs:content>
     <cs:footer />
   </cs:page>
@@ -212,15 +215,47 @@ def isOperationAllowed(contest_id, task_id, user_id):
 
 def submitTask(user, payload):
   try:
-    great_success = Task.check_output(payload.get('task_no'), payload.get('answer'))
+    task_id = payload.get('task_id')
+    contest_id = payload.get('contest_id')
+    answer = payload.get('answer')
+
+    #FIXME: check if operation allowed    
+
+    great_success = Task.check_output(task_id, answer)
+
+    response = None
+    if (great_success):
+      Score.solve_task(contest_id, user.id, task_id)
+      # add actual state.
+      response = {
+                   'verdict' : 'success'
+                 }
+    else:
+      Score.fail_task(contest_id, user.id, task_id)
+      response = {
+                   'verdict' : 'wrong-answer'
+                 }
+    return response
+  except:
+    return {}
+
+def skipTask(user, payload):
+  try:
+    task_id = payload.get('task_id')
+    contest_id = payload.get('contest_id')
+
+    #FIXME: check if operation allowed.
+
+    Score.skip_task(contest_id, user.id, task_id)
+    
     return {
-             'verdict'   : ('success' if great_success else 'wrong-answer')
+             'verdict' : 'skipped'
            }
   except:
     return {}
 
 data_providers = {
-  'getScores' : getScores,
+  'skipTask' : skipTask,
   'submitTask' : submitTask,
 }
 

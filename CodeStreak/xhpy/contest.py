@@ -118,17 +118,26 @@ class :cs:task-show(:x:element):
             <code>{task.input}</code> <br /><br />
           </div>
           if task.input else <x:frag />}
-        <table><tr><td>
-          <div class="input-append">
-            <input class="span2" id={"taskanswer"+str(task.id)} type="text"
-                placeholder="Type answer..." />
-            <button class="btn" type="button" id={"answerbutton" + str(task.id)} onClick={"submitTask(" +str(task.id) + ")"} data-loading-text="Loading...">
-              Submit!
-            </button>
-          </div>
-        </td><td>
-          {' '}<div id={"taskresponse"+str(task.id)}></div>
-        </td></tr></table>
+        <ul class="inline">
+          <li>
+            <div class="input-append">
+              <input class="span2" id={"taskanswer"+str(task.id)}
+                type="text" placeholder="Type answer..." />
+              <button class="btn btn-primary" type="button"
+                id={"answerbutton" + str(task.id)}
+                onClick={"submitTask(" +str(task.id) + ")"}
+                data-loading-text="Loading...">
+                Submit!
+              </button>
+            </div>
+          </li>
+          <li id={"taskresponse"+str(task.id)}></li>
+        </ul>
+        <button class="btn btn-danger"
+          onclick={"skipTask(" + str(task.id) + ")"}>
+          Skip task
+        </button>
+        <span class="help-inline">You can only do it once per contest!</span>
       </div>
       return page
 
