@@ -136,12 +136,14 @@ class :cs:contest-problem-set(:x:element):
     attribute object contest @required,
               list ordered_tasks @required,
               dict task_by_id @required,
-              dict score_by_task_id @required
+              dict score_by_task_id @required,
+              int task_id
     children empty
 
     def render(self):
         task_content = <div class="tab-content"></div>
         task_nav = <ul class="nav nav-tabs"></ul>
+        display_task_id = int(self.getAttribute('task_id'))
         response = \
         <div class="tabbable tabs-left">
           {task_nav}
@@ -152,6 +154,8 @@ class :cs:contest-problem-set(:x:element):
         task_by_id = self.getAttribute('task_by_id')
         score_by_task_id = self.getAttribute('score_by_task_id')
         for cnt, task_id in ordered_tasks:
+            if display_task_id == -1:
+              display_task_id = task_id
             task = task_by_id[task_id]
             score = score_by_task_id.get(task_id)
 
@@ -176,16 +180,17 @@ class :cs:contest-problem-set(:x:element):
             short_name = task.name
             if len(task.name) > 20:
               task.name=task.name[0:18] + '...'
+
             task_nav.appendChild(
-                <li class={'active' if cnt==0 else ''}>
+                <li class={'active' if task_id==display_task_id else ''}>
                   <a data-toggle="tab" href={"#task_tab" + str(cnt+1)}>
                     {badge} {' '}
-                    {task.name}
+                    {task.name + ' (' + str(task_id) + ')'}
                   </a>
                 </li>)
             task_content.appendChild(
                 <div id={"task_tab" + str(cnt+1)}
-                     class={"tab-pane active" if cnt == 0 else "tab-pane" }>
+                     class={"tab-pane active" if task_id==display_task_id else "tab-pane" }>
                     <cs:task-show task={task} />
                 </div>)
 

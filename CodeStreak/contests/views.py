@@ -60,7 +60,6 @@ def view_task(request, task_id):
 
   return HttpResponse(str(page))
 
-
 # TODO: Display all tasks if contest is over.
 @login_required
 def contest_home(request, contest_id):
@@ -68,6 +67,8 @@ def contest_home(request, contest_id):
     contest = Contest.get_contest(contest_id)
   except Contest.DoesNotExist:
     raise Http404
+
+  task_id_display = request.GET.get('task_id', -1)
 
   title = 'CodeStreak - {}'.format(contest.name)
   content = <div />
@@ -112,6 +113,7 @@ def contest_home(request, contest_id):
         contest={contest}
         ordered_tasks={ordered_tasks}
         task_by_id={task_by_id}
+        task_id={task_id_display}
         score_by_task_id={score_by_task_id} />)
 
   return HttpResponse(str(page))
