@@ -39,5 +39,6 @@ urlpatterns = patterns('',
       'document_root': settings.MEDIA_ROOT,
   }),
 
-  url(r'^pula', 'CodeStreak.contests.views.pula'),
+  url(r'^data_provider/(?P<action>.+)$',
+      'CodeStreak.contests.views.data_provider'),
 )

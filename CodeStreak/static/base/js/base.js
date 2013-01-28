@@ -69,7 +69,7 @@ $.ajaxSetup({
 
 function pullData(action_x, payload_x, callback ) {
   var request = $.ajax({
-    url: "/pula",
+    url: "/data_provider/" + action_x,
     type: "post",
     data: {
             action: action_x,

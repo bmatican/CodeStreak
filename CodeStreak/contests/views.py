@@ -219,10 +219,10 @@ data_providers = {
   'submitTask' : submitTask,
 }
 
-def pula(request):
+def data_provider(request, action):
+  print 'here'
   global data_providers
   if request.is_ajax() and request.method == 'POST':
-    action = request.POST.get('action', '')
     payload = json.loads(request.POST.get('payload', ''))
     response = None
     if action in data_providers:
