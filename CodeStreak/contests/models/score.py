@@ -20,11 +20,14 @@ class Score(models.Model):
 
   @classmethod
   def _get_entry(cls, contest_id, user_id, task_id):
-    return cls.objects.get(
-        contest__id=contest_id,
-        user__id=user_id,
-        task__id=task_id,
-    )
+    args = {
+      'contest__id' : contest_id,
+      'user__id' : user_id,
+      'task__id' : task_id,
+    }
+
+    obj, created = cls.objects.get_or_create(**args)
+    return obj
 
   @classmethod
   def _try_task(cls, entry):
