@@ -197,7 +197,7 @@ class :cs:content(:x:element):
 
     def render(self):
         messages = self.getAttribute('messages')
-        messages_xhp = <div class="alerts" />
+        messages_xhp = <div id="alerts" class="alerts" />
         for message in messages:
             messages_xhp.appendChild(
                 <div class={"alert alert-{}".format(message.tags)}>

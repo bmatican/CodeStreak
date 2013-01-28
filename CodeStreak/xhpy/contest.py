@@ -110,11 +110,17 @@ class :cs:task-show(:x:element):
             </div>
             if task.input else <x:frag />}
         </blockquote>
-        <div class="input-append">
-          <input class="span2" name="ans" type="text" 
-              placeholder="Type answer..." />
-          <button class="btn" type="button">Submit!</button>
-        </div>
+        <table><tr><td>
+          <div class="input-append">
+            <input class="span2" id={"taskanswer"+str(task.id)} type="text"
+                placeholder="Type answer..." />
+            <button class="btn" type="button" id={"answerbutton" + str(task.id)} onClick={"submitTask(" +str(task.id) + ")"} data-loading-text="Loading...">
+              Submit!
+            </button>
+          </div>
+        </td><td>
+          {' '}<div id={"taskresponse"+str(task.id)}></div>
+        </td></tr></table>
       </div>
       return page
 

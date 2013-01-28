@@ -203,38 +203,33 @@ def logout_view(request):
   return HttpResponseRedirect(url_reverse('contest-list'))
 
 
-# TODO: ajax
-def getScores():
+def getScores(user, payload):
   return {
             'scores' : 'scores',
          }
 
-
-def getLogs():
-  return {
-            'logs' : 'logs',
+def submitTask(user, payload):
+  
+  return { 
+            'verdict'   : 'success'
          }
 
 data_providers = {
   'getScores' : getScores,
-}
-
-restricted_data_providers = {
-  'getLogs' : getLogs,
+  'submitTask' : submitTask,
 }
 
 def pula(request):
   global data_providers
   if request.is_ajax() and request.method == 'POST':
     action = request.POST.get('action', '')
+    payload = json.loads(request.POST.get('payload', ''))
     response = None
     if action in data_providers:
       data_function = data_providers.get(action)
-      response = data_function()
-    if (response == None and action in restricted_data_providers and
-        request.user.is_staff):
-      data_function = restricted_data_providers.get(action)
-      response = data_function()
+      response = data_function(request.user, payload)
+    else:
+      print 'Unrecognized action'
     if response == None:
       raise Http404
     else:
