@@ -100,8 +100,7 @@ class LogEntry(CachingMixin, models.Model):
 
   class Meta:
     app_label = 'contests'
-    ordering = [
-      'time',
-    ]
+    ordering = ('-time',)
+    verbose_name_plural = 'log entries'
 
 __all__ = ['LogEntry']

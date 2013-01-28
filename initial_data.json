@@ -1,0 +1,75 @@
+[
+  {
+    "pk": 2,
+    "model": "contests.task",
+    "fields": {
+      "text": "My creativeness has run out... after two tasks :c",
+      "input": "",
+      "output": "2",
+      "name": "Task 2",
+      "difficulty": 1
+    }
+  },
+  {
+    "pk": 1,
+    "model": "contests.task",
+    "fields": {
+      "text": "Hello, you will be baked... and then there will be caek.",
+      "input": "",
+      "output": "1",
+      "name": "Task 1",
+      "difficulty": 2
+    }
+  },
+  {
+    "pk": 3,
+    "model": "contests.task",
+    "fields": {
+      "text": "AAAAAAAAaaaaaaAAAAA.... Your sex is on fire!",
+      "input": "",
+      "output": "3",
+      "name": "Task 3",
+      "difficulty": 2
+    }
+  },
+  {
+    "pk": 4,
+    "model": "contests.task",
+    "fields": {
+      "text": "Do I have a sign in front of my house that says dead nigger storage? NO? That's because storing dead niggers ain't my fucking business",
+      "input": "",
+      "output": "4",
+      "name": "Task 4",
+      "difficulty": 3
+    }
+  },
+  {
+    "pk": 5,
+    "model": "contests.task",
+    "fields": {
+      "text": "Would Mr. Wood conclude his interminable gabble? Some of us breathe oxygen and we find the mephitic fumes of his oratory a lethal challenge to our pulmonary capabilities.",
+      "input": "",
+      "output": "5",
+      "name": "Task 5",
+      "difficulty": 3
+    }
+  },
+  {
+    "pk": 1,
+    "model": "contests.contest",
+    "fields": {
+      "name": "My Contest",
+      "end_date": "2013-02-11T21:15:11Z",
+      "state": 0,
+      "assigned_tasks": [
+        2,
+        1,
+        3,
+        4,
+        5
+      ],
+      "max_skips": 1,
+      "start_date": "2013-02-11T19:44:24.522Z"
+    }
+  }
+]

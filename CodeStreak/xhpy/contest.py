@@ -71,6 +71,7 @@ class :cs:header-contest(:cs:header):
 
         return prepended_children
 
+
 class :cs:contest-list(:x:element):
     attribute list contests @required
     children empty
@@ -102,6 +103,7 @@ class :cs:contest-list(:x:element):
 
         return table
 
+
 class :cs:task-show(:x:element):
     attribute object task @required,
               object score @required
@@ -116,7 +118,7 @@ class :cs:task-show(:x:element):
         <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
         <strong>Problem</strong>
         <p>{ task.text } </p>
-        { 
+        {
           <div>
             <strong>Input</strong> <br />
             <code>{task.input}</code> <br /><br />
@@ -154,6 +156,7 @@ class :cs:task-show(:x:element):
       </div>
       return page
 
+
 class :cs:contest-problem-set(:x:element):
     attribute object contest @required,
               list ordered_tasks @required,
@@ -184,20 +187,19 @@ class :cs:contest-problem-set(:x:element):
 
             badge = <span class="label label-info">Untackled</span>
             score_str = '-'
-            if score:
-                if score.solved:
-                    badge = <span class="label label-success">Solved</span>
-                elif score.skipped:
-                    badge = <span class="label label-warning">Skipped</span>
-                else:
-                    # Wrong answer on previous attempts
-                    badge = \
-                    <span class="label label-important">
-                        Wrong answer
-                    </span>
+            if score.solved:
+                badge = <span class="label label-success">Solved</span>
+            elif score.skipped:
+                badge = <span class="label label-warning">Skipped</span>
+            elif score.tries != 0:
+                # Wrong answer on previous attempts
+                badge = \
+                <span class="label label-important">
+                    Wrong answer
+                </span>
 
-                score_str = '{} ({})'.format(
-                        score.score, score.format_tries())
+            score_str = '{} ({})'.format(
+                    score.score, score.format_tries())
             task_url = url_reverse('task-view', args=(task.id,))
 
             short_name = task.name
@@ -208,7 +210,7 @@ class :cs:contest-problem-set(:x:element):
                 <li class={'active' if task_id==display_task_id else ''}>
                   <a data-toggle="tab" href={"#task_tab" + str(cnt+1)}>
                     {badge} {' '}
-                    {task.name + ' (' + str(task_id) + ')'}
+                    {task.name}
                   </a>
                 </li>)
             task_content.appendChild(
@@ -236,8 +238,8 @@ class :cs:contest-rankings(:x:element):
                 url_reverse('contest-home', args=(contest.id,)), task.id)
             header_tasks.appendChild(
                 <th class="task-score">
-                    <a href={task_url} rel="tooltip" title={task.name}>
-                        {task.id}
+                    <a href={task_url}>
+                        {task.name}
                     </a>
                 </th>)
 
