@@ -103,11 +103,13 @@ class :cs:contest-list(:x:element):
         return table
 
 class :cs:task-show(:x:element):
-    attribute object task @required
+    attribute object task @required,
+              object score @required
     children empty
 
     def render(self):
       task = self.getAttribute('task')
+      score = self.getAttribute('score')
       page = \
       <div>
         <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
@@ -119,7 +121,7 @@ class :cs:task-show(:x:element):
           </div>
           if task.input else <x:frag />}
         <ul class="inline">
-          <li>
+          {<li>
             <div class="input-append">
               <input class="span2" id={"taskanswer"+str(task.id)}
                 type="text" placeholder="Type answer..." />
@@ -131,8 +133,10 @@ class :cs:task-show(:x:element):
               </button>
             </div>
           </li>
+          if not score or (score.skipped and not score.solved)  else <x:frag />}
           <li id={"taskresponse"+str(task.id)}></li>
         </ul>
+        #FIXME: Don't display it here if not possible to skip
         <button class="btn btn-danger"
           onclick={"skipTask(" + str(task.id) + ")"}>
           Skip task
@@ -200,7 +204,7 @@ class :cs:contest-problem-set(:x:element):
             task_content.appendChild(
                 <div id={"task_tab" + str(cnt+1)}
                      class={"tab-pane active" if task_id==display_task_id else "tab-pane" }>
-                    <cs:task-show task={task} />
+                    <cs:task-show task={task} score={score} />
                 </div>)
 
         return response
