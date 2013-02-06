@@ -1,4 +1,7 @@
 from django.db import models, transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.cache import cache
 from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -7,6 +10,8 @@ from CodeStreak.contests.models.log_entry import LogEntry
 from CodeStreak.contests.models.participation import Participation
 
 class Score(models.Model):
+  CACHE_PREFIX = 'score'
+
   SKIPPED = 0.5
   FULL = 1.0
 
@@ -28,8 +33,19 @@ class Score(models.Model):
 
   @classmethod
   def get_entry(cls, contest_id, user_id, task_id):
-    args = cls._make_args(contest_id, user_id, task_id)
-    return cls.objects.get(**args)
+    cache_key = "{}:{}:{}:{}".format(cls.CACHE_PREFIX, contest_id, user_id, task_id)
+
+    @receiver(post_save, sender=cls, weak=False)
+    def fix_cache(sender, **kwargs):
+      score = kwargs['instance']
+      cache.set(cache_key, score)
+
+    score = cache.get(cache_key)
+    if score == None:
+      args = cls._make_args(contest_id, user_id, task_id)
+      score = cls.objects.get(**args)
+      cache.set(cache_key, score)
+    return score
 
   @classmethod
   def create_entry(cls, contest_id, user_id, task_id):
@@ -81,15 +97,27 @@ class Score(models.Model):
 
   @classmethod
   def get_scores(cls, contest_id, user_id, with_tasks=True):
-    obj = cls.objects.filter(
-        contest__id=contest_id,
-        user__id=user_id
-    ).order_by('task')
-    if with_tasks:
-      obj = obj.select_related(
-          'task',
-      )
-    return obj
+    cache_key = "{}:{}:{}:{}".format(cls.CACHE_PREFIX, contest_id, user_id, 'tasks' if with_tasks else 'no_tasks')
+
+    """
+    @receiver(post_save, sender=cls, weak=False)
+    def fix_cache(sender, **kwargs):
+      score = kwargs['instance']
+      cache.set(cache_key, score)
+    """
+
+    scores = cache.get(cache_key)
+    if scores == None:
+      scores = cls.objects.filter(
+          contest__id=contest_id,
+          user__id=user_id
+      ).order_by('task')
+      if with_tasks:
+        scores = scores.select_related(
+            'task',
+        )
+      cache.set(cache_key, scores.all())
+    return scores
 
   def format_tries(self):
     return '{} {}'.format(

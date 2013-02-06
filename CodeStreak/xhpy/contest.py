@@ -249,6 +249,7 @@ class :cs:contest-rankings(:x:element):
             score = participation.score
 
             task_scores = <x:frag />
+            #TODO: we have a way of getting them sorted...this seems duplicate
             scores_per_task = Score.get_scores(contest.id, user.id)
             for task in tasks:
                 if len(scores_per_task):

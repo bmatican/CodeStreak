@@ -1,8 +1,9 @@
 from django.db import models, transaction, IntegrityError
-from django.contrib.auth.models import User
-
-from django.utils.timezone import now
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.core.cache import cache
+from django.contrib.auth.models import User
+from django.utils.timezone import now
 
 from CodeStreak.contests.models.participation import Participation
 from CodeStreak.contests.models.score import Score
@@ -51,16 +52,41 @@ class Contest(models.Model):
 
   @classmethod
   def get_contest(cls, contest_id):
-    return cls.objects.get(id=contest_id)
+    cache_key = "{}:{}".format(cls.CACHE_PREFIX, contest_id)
+
+    @receiver(post_save, sender=cls, weak=False)
+    def fix_cache(sender, **kwargs):
+      contest = kwargs['instance']
+      cache.set(cache_key, contest)
+
+    contest = cache.get(cache_key)
+    if contest == None:
+      contest = cls.objects.get(id=contest_id)
+      cache.set(cache_key, contest)
+    return contest
 
   @classmethod
   def get_task_ordering(cls, contest_id):
-    cache_key = cls.CACHE_PREFIX + ":" + str(contest_id)
+    cache_key = "{}:{}/task_ordering".format(cls.CACHE_PREFIX, contest_id)
+
+    def get_and_sort_tasks(contest):
+      return list(enumerate([el['id'] for el in \
+          contest.assigned_tasks.values('id')]))
+
+    """
+    # this is not really needed, as you should never call get_task_ordering
+    # without the contest having started...and you should never change problem
+    # ordering mid contest...
+    @receiver(post_save, sender=cls, weak=False)
+    def fix_cache(sender, **kwargs):
+      contest = kwargs['instance']
+      tasks = get_and_sort_tasks(contest)
+      cache.set(cache_key, tasks)
+    """
+
     tasks = cache.get(cache_key)
     if tasks == None:
-      contest = cls.get_contest(contest_id)
-      tasks = contest.assigned_tasks.values('id')
-      tasks = list(enumerate([el['id'] for el in tasks]))
+      tasks = get_and_sort_tasks(cls.get_contest(contest_id))
       cache.set(cache_key, tasks)
     return tasks
 

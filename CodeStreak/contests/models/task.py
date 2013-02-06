@@ -1,7 +1,12 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.cache import cache
 from django.contrib.auth.models import User
 
 class Task(models.Model):
+  CACHE_PREFIX = 'task'
+
   UNASSIGNED = 0
   EASY = 1
   MEDIUM = 2
@@ -21,7 +26,18 @@ class Task(models.Model):
 
   @classmethod
   def get_task(cls, task_id):
-    return cls.objects.get(id=task_id)
+    cache_key = "{}:{}".format(cls.CACHE_PREFIX, task_id)
+
+    @receiver(post_save, sender=cls, weak=False)
+    def fix_cache(sender, **kwargs):
+      task = kwargs['instance']
+      cache.set(cache_key, task)
+
+    task = cache.get(cache_key)
+    if task == None:
+      task = cls.objects.get(id=task_id)
+      cache.set(cache_key, task)
+    return task
 
   @classmethod
   def check_output(cls, task_id, output):
