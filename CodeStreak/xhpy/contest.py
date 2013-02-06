@@ -115,33 +115,41 @@ class :cs:task-show(:x:element):
         <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
         <strong>Problem</strong>
         <p>{ task.text } </p>
-        { <div>
+        { 
+          <div>
             <strong>Input</strong> <br />
             <code>{task.input}</code> <br /><br />
           </div>
-          if task.input else <x:frag />}
+          if task.input else <x:frag />
+        }
         <ul class="inline">
-          {<li>
-            <div class="input-append">
-              <input class="span2" id={"taskanswer"+str(task.id)}
-                type="text" placeholder="Type answer..." />
-              <button class="btn btn-primary" type="button"
-                id={"answerbutton" + str(task.id)}
-                onClick={"submitTask(" +str(task.id) + ")"}
-                data-loading-text="Loading...">
-                Submit!
-              </button>
-            </div>
-          </li>
-          if not score or (score.skipped and not score.solved)  else <x:frag />}
+          {
+            <li>
+              <div class="input-append">
+                <input class="span2" id={"taskanswer"+str(task.id)}
+                  type="text" placeholder="Type answer..." />
+                <button class="btn btn-primary" type="button"
+                  id={"answerbutton" + str(task.id)}
+                  onClick={"submitTask(" +str(task.id) + ")"}
+                  data-loading-text="Loading...">
+                  Submit!
+                </button>
+              </div>
+            </li>
+            if not score.solved  else <x:frag />
+          }
           <li id={"taskresponse"+str(task.id)}></li>
         </ul>
-        #FIXME: Don't display it here if not possible to skip
-        <button class="btn btn-danger"
-          onclick={"skipTask(" + str(task.id) + ")"}>
-          Skip task
-        </button>
-        <span class="help-inline">You can only do it once per contest!</span>
+        {
+          <div>
+            <button class="btn btn-danger"
+              onclick={"skipTask(" + str(task.id) + ")"}>
+              Skip task
+            </button>
+            <span class="help-inline">You can only do it once per contest!</span>
+          </div>
+          if not score.solved and not score.skipped else <x:frag />
+        }
       </div>
       return page
 
@@ -154,6 +162,7 @@ class :cs:contest-problem-set(:x:element):
     children empty
 
     def render(self):
+        # ordered_tasks is actually visible tasks!
         task_content = <div class="tab-content"></div>
         task_nav = <ul class="nav nav-tabs"></ul>
         display_task_id = int(self.getAttribute('task_id'))
@@ -166,9 +175,9 @@ class :cs:contest-problem-set(:x:element):
         ordered_tasks = self.getAttribute('ordered_tasks')
         task_by_id = self.getAttribute('task_by_id')
         score_by_task_id = self.getAttribute('score_by_task_id')
+        if display_task_id == -1 and len(ordered_tasks) > 0:
+              _, display_task_id = ordered_tasks[-1] # focus on the last one...
         for cnt, task_id in ordered_tasks:
-            if display_task_id == -1:
-              display_task_id = task_id
             task = task_by_id[task_id]
             score = score_by_task_id.get(task_id)
 

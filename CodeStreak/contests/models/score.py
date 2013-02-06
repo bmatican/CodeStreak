@@ -1,4 +1,4 @@
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.cache import cache
@@ -117,7 +117,7 @@ class Score(models.Model):
             'task',
         )
       cache.set(cache_key, scores.all())
-    return scores
+    return scores.all()
 
   def format_tries(self):
     return '{} {}'.format(

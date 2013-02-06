@@ -86,21 +86,22 @@ def contest_home(request, contest_id):
     <cs:footer />
   </cs:page>
 
-  user_id = request.user.id
-  try:
-    handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
-  except Score.DoesNotExist:
-    raise Http404
-  except Contest.DoesNotExist:
-    raise Http404
+  if contest.state == Contest.STARTED:
+    user_id = request.user.id
+    try:
+      handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
+    except Score.DoesNotExist:
+      raise Http404
+    except Contest.DoesNotExist:
+      raise Http404
 
-  content.appendChild(
-      <cs:contest-problem-set
-        contest={contest}
-        ordered_tasks={handler.get_visible_tasks()}
-        task_by_id={handler.task_by_id}
-        task_id={task_id_display}
-        score_by_task_id={handler.score_by_task_id} />)
+    content.appendChild(
+        <cs:contest-problem-set
+          contest={contest}
+          ordered_tasks={handler.get_visible_tasks()}
+          task_by_id={handler.task_by_id}
+          task_id={task_id_display}
+          score_by_task_id={handler.score_by_task_id} />)
 
   return HttpResponse(str(page))
 
