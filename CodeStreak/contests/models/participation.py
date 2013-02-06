@@ -5,6 +5,15 @@ class Participation(models.Model):
   contest = models.ForeignKey('Contest')
   user = models.ForeignKey(User)
   score = models.FloatField(default=0, db_index=True)
+  skips_left = models.IntegerField() # should be set from Contest
+
+  def increment_score(self, add_score):
+    self.score += add_score
+    self.save()
+
+  def skip_task(self):
+    self.skips_left -= 1
+    self.save()
 
   @classmethod
   def get_entry(cls, contest_id, user_id):
@@ -12,24 +21,6 @@ class Participation(models.Model):
       contest__id=contest_id,
       user__id=user_id
     )
-
-  @classmethod
-  def register_user(cls, contest_id, user_id):
-    p = cls(
-      contest_id=contest_id,
-      user_id=user_id,
-    )
-    p.save()
-
-  @classmethod
-  def unregister_user(cls, contest_id, user_id):
-    cls.get_entry(contest_id, user_id).delete()
-
-  @classmethod
-  def update_score(cls, contest_id, user_id, add_score):
-    entry = cls.get_entry(contest_id, user_id)
-    entry.score += add_score
-    entry.save()
 
   @classmethod
   def get_rankings(cls, contest_id, limit=None, offset=None):

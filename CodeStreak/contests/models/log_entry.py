@@ -54,7 +54,7 @@ class LogEntry(models.Model):
 
   @classmethod
   def start_contest(cls, contest_id):
-    cls._make_contest_entry(contest_id, cls.ONTEST_STARTED)
+    cls._make_contest_entry(contest_id, cls.CONTEST_STARTED)
 
   @classmethod
   def end_contest(cls, contest_id):

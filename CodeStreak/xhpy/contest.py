@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse as url_reverse
 from django.utils.timezone import now
 
 from CodeStreak.xhpy.base import *
-from CodeStreak.contests.models import Score, Participation, LogEntry
+from CodeStreak.contests.models import Score, Participation, LogEntry, Contest
 from CodeStreak.contests.utils.tasks import InvalidProblemOrderingException
 
 
@@ -45,7 +45,7 @@ class :cs:header-contest(:cs:header):
                 Rankings
             </cs:header-link>
         </x:frag>
-        if user.is_authenticated() and contest.start_date > now():
+        if user.is_authenticated() and contest.state is Contest.UNASSIGNED:
             try:
                 Participation.get_entry(contest.id, user.id)
                 content = 'Unregister'

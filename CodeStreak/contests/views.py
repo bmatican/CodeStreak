@@ -141,7 +141,7 @@ def register_to_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
     contest_url = url_reverse('contest-home', args=(contest_id,))
-    Participation.register_user(contest_id, request.user.id)
+    contest.register_user(request.user.id)
   except Contest.DoesNotExist:
     raise Http404
   except IntegrityError:
@@ -159,7 +159,7 @@ def unregister_from_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
     contest_url = url_reverse('contest-home', args=(contest_id,))
-    Participation.unregister_user(contest_id, request.user.id)
+    contest.unregister_user(request.user.id)
   except Contest.DoesNotExist:
     raise Http404
   except Participation.DoesNotExist:

@@ -1,18 +1,32 @@
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import User
 
 from django.utils.timezone import now
 from django.core.cache import cache
 
-from CodeStreak.contests.models.task import Task
+from CodeStreak.contests.models.participation import Participation
+from CodeStreak.contests.models.score import Score
 from CodeStreak.contests.models.log_entry import LogEntry
 
 class Contest(models.Model):
   CACHE_PREFIX = 'contest'
+
+  UNASSIGNED = 0
+  STARTED = 1
+  PAUSED = 2
+  STOPPED = 3
+  STATES = (
+    (UNASSIGNED, 'Unassigned'),
+    (STARTED, 'Started'),
+    (PAUSED, 'Paused'),
+    (STOPPED, 'Stopped'),
+  )
+
   name = models.CharField(max_length=128)
-  start_date = models.DateTimeField()
-  end_date = models.DateTimeField()
-  paused = models.BooleanField(default=False)
+  max_skips = models.IntegerField(default=1)
+  start_date = models.DateTimeField(blank=True, null=True, default=None)
+  end_date = models.DateTimeField(blank=True, null=True, default=None)
+  state = models.IntegerField(choices=STATES, default=UNASSIGNED)
   registered_users = models.ManyToManyField(
       User,
       related_name='registered_contests',
@@ -44,17 +58,25 @@ class Contest(models.Model):
     cache_key = cls.CACHE_PREFIX + ":" + str(contest_id)
     tasks = cache.get(cache_key)
     if tasks == None:
-      tasks = cls.objects.get(
-        id=contest_id
-      ).assigned_tasks.values(
-        'id'
-      )
+      contest = cls.get_contest(contest_id)
+      tasks = contest.assigned_tasks.values('id')
       tasks = list(enumerate([el['id'] for el in tasks]))
       cache.set(cache_key, tasks)
     return tasks
 
+  def register_user(self, user_id):
+    p = Participation(
+      contest_id=self.id,
+      user_id=user_id,
+      skips_left=self.max_skips,
+    )
+    p.save()
+
+  def unregister_user(self, user_id):
+    Participation.get_entry(self.id, user_id).delete()
+
   def is_user_registered(self, user_id):
-    return (user_id,) in self.registered_users.values_list('id')
+    return {'id':user_id} in self.registered_users.values('id')
 
   def get_registered_user_count(self):
     return self.registered_users.count()
@@ -62,38 +84,50 @@ class Contest(models.Model):
   def get_assigned_task_count(self):
     return self.assigned_tasks.count()
 
-  def assign_tasks(self, task_ids):
-    tasks = Task.objects.filter(id__in=task_ids)
-    for t in tasks:
-      self.assigned_tasks.add(t)
-
-  def assign_task(self, task_id):
-    task = Task.objects.get(id=task_id)
-    self.assigned_tasks.add(task)
+  def _preset_scores(self):
+    order = self.get_task_ordering(self.id)
+    for u in self.registered_users.all():
+      for _, task_id in order:
+        Score.create_entry(self.id, u.id, task_id)
 
   @transaction.commit_on_success
   def start(self):
-    self.start_date = now()
-    self.save()
-    LogEntry.start_contest(self.id)
+    if self.state is Contest.UNASSIGNED:
+      self.state = Contest.STARTED
+      self.start_date = now()
+      self.save()
+      self._preset_scores()
+      LogEntry.start_contest(self.id)
+    else:
+      raise IntegrityError
 
   @transaction.commit_on_success
   def stop(self):
-    self.end_date = now()
-    self.save()
-    LogEntry.stop_contest(self.id)
+    if self.state is Contest.STARTED or self.state is Contest.PAUSED:
+      self.state = Contest.STOPPED
+      self.end_date = now()
+      self.save()
+      LogEntry.stop_contest(self.id)
+    else:
+      raise IntegrityError
 
   @transaction.commit_on_success
   def pause(self):
-    self.paused = True
-    self.save()
-    LogEntry.pause_contest(self.id)
+    if self.state is Contest.STARTED:
+      self.state = Contest.PAUSED
+      self.save()
+      LogEntry.pause_contest(self.id)
+    else:
+      raise IntegrityError
 
   @transaction.commit_on_success
   def resume(self):
-    self.paused = False
-    self.save()
-    LogEntry.resume_contest(self.id)
+    if self.state is Contest.PAUSED:
+      self.state = Contest.STARTED
+      self.save()
+      LogEntry.resume_contest(self.id)
+    else:
+      raise IntegrityError
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)

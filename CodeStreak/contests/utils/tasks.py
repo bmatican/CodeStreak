@@ -42,29 +42,27 @@ class TaskVisibilityHandler:
     instance.scores = scores
     instance.task_by_id = task_by_id
     instance.score_by_task_id = score_by_task_id
-
     instance.visible_tasks = instance.get_visible_tasks()
-    if len(instance.visible_tasks) > 0:
-      _, task_id = instance.visible_tasks[-1]
-      if task_id not in instance.task_by_id:
-        instance.task_by_id[task_id] = Task.get_task(task_id)
 
     return instance
 
     
   def get_visible_tasks(self):
-    # no try catch, let
-    next = None
-    for ind, id in self.indexed_task_ids:
-      if ind >= len(self.done_task_ids):
-        next = (ind, id) # found it
-        break
-      if self.done_task_ids[ind] != id:
-        raise InvalidProblemOrderingException  # invalid order
-    if next == None:
-      return self.indexed_task_ids
+    if self.visible_tasks != []:
+      return self.visible_tasks
     else:
-      return self.indexed_task_ids[:len(self.done_task_ids) + 1]
+      # no try catch, let
+      next = None
+      for ind, id in self.indexed_task_ids:
+        if ind >= len(self.done_task_ids):
+          next = (ind, id) # found it
+          break
+        if self.done_task_ids[ind] != id:
+          raise InvalidProblemOrderingException  # invalid order
+      if next == None:
+        return self.indexed_task_ids
+      else:
+        return self.indexed_task_ids[:len(self.done_task_ids) + 1]
 
 
   def is_task_visible(self, task_id):
