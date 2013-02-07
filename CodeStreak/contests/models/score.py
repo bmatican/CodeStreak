@@ -1,16 +1,15 @@
 from django.db import models, transaction, IntegrityError
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.core.cache import cache
 from django.contrib.auth.models import User
 from datetime import datetime
+
+from caching.base import CachingMixin, CachingManager
 
 from CodeStreak.contests.models.task import Task
 from CodeStreak.contests.models.log_entry import LogEntry
 from CodeStreak.contests.models.participation import Participation
 
-class Score(models.Model):
-  CACHE_PREFIX = 'score'
+class Score(CachingMixin, models.Model):
+  objects = CachingManager()
 
   SKIPPED = 0.5
   FULL = 1.0
@@ -33,19 +32,8 @@ class Score(models.Model):
 
   @classmethod
   def get_entry(cls, contest_id, user_id, task_id):
-    cache_key = "{}:{}:{}:{}".format(cls.CACHE_PREFIX, contest_id, user_id, task_id)
-
-    @receiver(post_save, sender=cls, weak=False)
-    def fix_cache(sender, **kwargs):
-      score = kwargs['instance']
-      cache.set(cache_key, score)
-
-    score = cache.get(cache_key)
-    if score == None:
-      args = cls._make_args(contest_id, user_id, task_id)
-      score = cls.objects.get(**args)
-      cache.set(cache_key, score)
-    return score
+    args = cls._make_args(contest_id, user_id, task_id)
+    return cls.objects.get(**args)
 
   @classmethod
   def create_entry(cls, contest_id, user_id, task_id):
@@ -96,27 +84,15 @@ class Score(models.Model):
       raise IntegrityError
 
   @classmethod
-  def get_scores(cls, contest_id, user_id, with_tasks=True):
-    cache_key = "{}:{}:{}:{}".format(cls.CACHE_PREFIX, contest_id, user_id, 'tasks' if with_tasks else 'no_tasks')
-
-    """
-    @receiver(post_save, sender=cls, weak=False)
-    def fix_cache(sender, **kwargs):
-      score = kwargs['instance']
-      cache.set(cache_key, score)
-    """
-
-    scores = cache.get(cache_key)
-    if scores == None:
-      scores = cls.objects.filter(
-          contest__id=contest_id,
-          user__id=user_id
-      ).order_by('task')
-      if with_tasks:
-        scores = scores.select_related(
-            'task',
-        )
-      cache.set(cache_key, scores.all())
+  def get_scores(cls, contest_id, user_id):
+    scores = cls.objects.filter(
+        contest__id=contest_id,
+        user__id=user_id
+    ).order_by('task')
+    # separated if we want to put an if back
+    scores = scores.select_related(
+        'task',
+    )
     return scores.all()
 
   def format_tries(self):

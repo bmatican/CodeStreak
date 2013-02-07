@@ -1,7 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class LogEntry(models.Model):
+from caching.base import CachingMixin, CachingManager
+
+class LogEntry(CachingMixin, models.Model):
+  objects = CachingManager()
+
   CONTEST_STARTED = 1
   CONTEST_PAUSED = 2
   CONTEST_RESUMED = 3

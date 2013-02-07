@@ -191,14 +191,18 @@ AUTHENTICATION_BACKENDS = (
 AUTH_PROFILE_MODULE = 'django_facebook.FacebookProfile'
 #FACEBOOK_REGISTRATION_BACKEND = 'registration.backends.default.DefaultBackend'
 
-
+DEFAULT_LOCATION = '127.0.0.1:11211'
 CACHES = {
   'default': {
     'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-    'LOCATION': '127.0.0.1:11211',
-    'TIMEOUT': 30, # we should modify this
+    'LOCATION': DEFAULT_LOCATION,
+    'TIMEOUT': 60, # we should modify this
+    'KEY_PREFIX': DEFAULT_LOCATION,
   }
 }
+CACHE_BACKEND = 'caching.backends.memcached://{}'.format(CACHES['default']['LOCATION'])
+CACHE_PREFIX = CACHES['default']['KEY_PREFIX']
+CACHE_COUNT_TIMEOUT = CACHES['default']['TIMEOUT'] / 2 # seconds, not too long.
 
 try:
   from local_settings import *
