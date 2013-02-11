@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
@@ -138,37 +138,44 @@ def contest_ranking(request, contest_id):
 
 @require_POST
 @login_required
+# Transaction needed in case user registers at the same moment a contest
+# starts. Since we have logic which creates db objects based on the set of
+# registered users we need to avoid race conditions.
+@transaction.commit_on_success
 def register_to_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
     contest_url = url_reverse('contest-home', args=(contest_id,))
     contest.register_user(request.user.id)
+    messages.info(request,
+        'Registration complete for {}'.format(contest.name))
   except Contest.DoesNotExist:
     raise Http404
+  except ContestStartedException:
+    messages.error(request, 'The contest has already started!')
   except IntegrityError:
     messages.error(request, 'You are already signed up for this contest!')
-    return HttpResponseRedirect(contest_url)
 
-  messages.info(request,
-      'Registration complete for {}'.format(contest.name))
   return HttpResponseRedirect(contest_url)
 
 
 @require_POST
 @login_required
+@transaction.commit_on_success
 def unregister_from_contest(request, contest_id):
   try:
     contest = Contest.get_contest(contest_id)
     contest_url = url_reverse('contest-home', args=(contest_id,))
     contest.unregister_user(request.user.id)
+    messages.info(request,
+        'You are no longer registered for {}'.format(contest.name))
   except Contest.DoesNotExist:
     raise Http404
+  except ContestStartedException:
+    messages.error(request, 'The contest has already started!')
   except Participation.DoesNotExist:
     messages.error(request, 'You are not signed up for this contest!')
-    return HttpResponseRedirect(contest_url)
 
-  messages.info(request,
-      'You are no longer registered for {}'.format(contest.name))
   return HttpResponseRedirect(contest_url)
 
 
@@ -237,7 +244,7 @@ def skipTask(user, payload):
 
     if can_submit_task(contest_id, user.id, task_id):
       Score.skip_task(contest_id, user.id, task_id)
-      response['verdict'] = 'skipped'   
+      response['verdict'] = 'skipped'
       return response
     else:
       return response

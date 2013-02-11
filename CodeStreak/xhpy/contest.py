@@ -19,7 +19,7 @@ class :cs:header-contest(:cs:header):
     attribute float end_timestamp,
               object contest @required,
               object user,
-              str active_tab = 'content-home'
+              str active_tab = 'contest-home'
 
     def get_prepended_children(self):
         contest = self.getAttribute('contest')
@@ -45,12 +45,11 @@ class :cs:header-contest(:cs:header):
                 Rankings
             </cs:header-link>
         </x:frag>
-        if user.is_authenticated() and contest.state is Contest.UNASSIGNED:
-            try:
-                Participation.get_entry(contest.id, user.id)
+        if user.is_authenticated() and contest.state == Contest.UNASSIGNED:
+            if contest.is_user_registered(user.id):
                 content = 'Unregister'
                 link = url_reverse('contest-unregister', args=(contest.id,))
-            except Participation.DoesNotExist:
+            else:
                 content = 'Register'
                 link = url_reverse('contest-register', args=(contest.id,))
             prepended_children.appendChild(
@@ -84,6 +83,7 @@ class :cs:contest-list(:x:element):
                 <tr>
                     <th>Contest</th>
                     <th>Start date</th>
+                    <th>Duration</th>
                     <th>Registered users</th>
                     <th>Number of tasks</th>
                 </tr>
@@ -96,7 +96,16 @@ class :cs:contest-list(:x:element):
             tbody.appendChild(
                 <tr>
                     <td><a href={contest_url}>{contest.name}</a></td>
-                    <td><a href={contest_url}>{contest.start_date}</a></td>
+                    <td>
+                        <a href={contest_url}>
+                            {contest.intended_start_date}
+                        </a>
+                    </td>
+                    <td>
+                        <a href={contest_url}>
+                            {contest.format_intended_duration()}
+                        </a>
+                    </td>
                     <td>{contest.get_registered_user_count()}</td>
                     <td>{contest.get_assigned_task_count()}</td>
                 </tr>)

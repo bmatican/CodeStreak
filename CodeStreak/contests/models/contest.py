@@ -8,6 +8,7 @@ from CodeStreak.contests.models.participation import Participation
 from CodeStreak.contests.models.score import Score
 from CodeStreak.contests.models.log_entry import LogEntry
 
+
 class Contest(CachingMixin, models.Model):
   objects = CachingManager()
 
@@ -23,9 +24,19 @@ class Contest(CachingMixin, models.Model):
   )
 
   name = models.CharField(max_length=128)
-  max_skips = models.IntegerField(default=1)
-  start_date = models.DateTimeField(blank=True, null=True, default=None)
-  end_date = models.DateTimeField(blank=True, null=True, default=None)
+  max_skips = models.IntegerField(default=1,
+      help_text="Maximum number of tasks a participant " +
+                "can skip during contest")
+  intended_start_date = models.DateTimeField(
+      help_text="Intended start date displayed to users")
+  intended_duration = models.FloatField(default=3.0,
+      help_text="Intended contest duration displayed to users")
+  running_time = models.IntegerField(default=0,
+      help_text="For internal use: number of seconds contest has run " +
+                "in the past")
+  last_start_date = models.DateTimeField(blank=True, null=True,
+      help_text="For internal use: last time at which contest was " +
+                "started")
   state = models.IntegerField(choices=STATES, default=UNASSIGNED)
   registered_users = models.ManyToManyField(
       User,
@@ -59,18 +70,24 @@ class Contest(CachingMixin, models.Model):
         cls.get_contest(contest_id).assigned_tasks.values('id')]))
 
   def register_user(self, user_id):
-    p = Participation(
-      contest_id=self.id,
-      user_id=user_id,
-      skips_left=self.max_skips,
-    )
-    p.save()
+    if self.state == Contest.UNASSIGNED:
+      p = Participation(
+        contest_id=self.id,
+        user_id=user_id,
+        skips_left=self.max_skips,
+      )
+      p.save()
+    else:
+      raise ContestStartedException(self)
 
   def unregister_user(self, user_id):
-    Participation.get_entry(self.id, user_id).delete()
+    if self.state == Contest.UNASSIGNED:
+      Participation.get_entry(self.id, user_id).delete()
+    else:
+      raise ContestStartedException(self)
 
   def is_user_registered(self, user_id):
-    return {'id':user_id} in self.registered_users.values('id')
+    return {'id': user_id} in self.registered_users.values('id')
 
   def get_registered_user_count(self):
     return self.registered_users.count()
@@ -88,7 +105,7 @@ class Contest(CachingMixin, models.Model):
   def start(self):
     if self.state is Contest.UNASSIGNED:
       self.state = Contest.STARTED
-      self.start_date = now()
+      self.last_start_date = now()
       self.save()
       self._preset_scores()
       LogEntry.start_contest(self.id)
@@ -99,7 +116,6 @@ class Contest(CachingMixin, models.Model):
   def stop(self):
     if self.state is Contest.STARTED or self.state is Contest.PAUSED:
       self.state = Contest.STOPPED
-      self.end_date = now()
       self.save()
       LogEntry.stop_contest(self.id)
     else:
@@ -109,6 +125,7 @@ class Contest(CachingMixin, models.Model):
   def pause(self):
     if self.state is Contest.STARTED:
       self.state = Contest.PAUSED
+      self.running_time = self.get_current_running_time()
       self.save()
       LogEntry.pause_contest(self.id)
     else:
@@ -123,10 +140,32 @@ class Contest(CachingMixin, models.Model):
     else:
       raise IntegrityError
 
+  def get_current_running_time(self):
+    if self.state == Contest.UNASSIGNED:
+      return 0
+    elif self.state == Contest.STARTED:
+      return (now() - self.last_start_date).seconds
+    else:
+      return self.running_time
+
+  def format_intended_duration(self):
+    return '{} {}'.format(
+        self.intended_duration,
+        'hour' if self.intended_duration == 1 else 'hours')
+
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)
 
   class Meta:
     app_label = 'contests'
 
-__all__ = ['Contest']
+
+class ContestStartedException(Exception):
+  pass
+
+
+class ContestNotStartedException(Exception):
+  pass
+
+
+__all__ = ['Contest', 'ContestStartedException', 'ContestNotStartedException']

@@ -59,7 +59,7 @@
     "model": "contests.contest",
     "fields": {
       "name": "My Contest",
-      "end_date": "2013-02-11T21:15:11Z",
+      "intended_duration": "3",
       "state": 0,
       "assigned_tasks": [
         2,
@@ -69,7 +69,7 @@
         5
       ],
       "max_skips": 1,
-      "start_date": "2013-02-11T19:44:24.522Z"
+      "intended_start_date": "2013-02-11T19:44:24.522Z"
     }
   }
 ]
