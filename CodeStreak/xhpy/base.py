@@ -83,16 +83,19 @@ class :cs:page(:x:element):
 
 
 class :cs:header(:x:element):
-    attribute float end_timestamp,
+    attribute float time_left,
               object user
     children :cs:header-link*, :cs:header-separator*
 
     def get_prepended_children(self):
         return <x:frag />
 
+    def get_time_left(self):
+        return self.getAttribute('time_left')
+
     def render(self):
         user = self.getAttribute('user')
-        end_timestamp = self.getAttribute('end_timestamp')
+        time_left = self.get_time_left()
         if user.is_authenticated():
             user_info = \
             <li class="dropdown">
@@ -142,12 +145,10 @@ class :cs:header(:x:element):
                     <ul class="nav pull-right">
                         {user_info}
                     </ul>
-                    {<div class="navbar-text pull-right">Time left:{' '}
-                        <span id="timeLeft" class={end_timestamp}>
-                            00:00:00
-                        </span>
+                    {<div class="navbar-text pull-right">
+                        <span id="time-left" class={int(time_left)}></span>
                     </div>
-                    if end_timestamp else <x:frag />}
+                    if time_left else <x:frag />}
                 </div>
             </div>
         </div>

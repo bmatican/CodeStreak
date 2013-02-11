@@ -16,10 +16,12 @@ class :cs:header-home(:cs:header):
 
 
 class :cs:header-contest(:cs:header):
-    attribute float end_timestamp,
-              object contest @required,
+    attribute object contest @required,
               object user,
               str active_tab = 'contest-home'
+
+    def get_time_left(self):
+        return self.getAttribute('contest').get_time_left()
 
     def get_prepended_children(self):
         contest = self.getAttribute('contest')

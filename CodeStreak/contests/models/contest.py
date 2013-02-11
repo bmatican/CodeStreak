@@ -148,6 +148,10 @@ class Contest(CachingMixin, models.Model):
     else:
       return self.running_time
 
+  def get_time_left(self):
+      return max(0.0, self.intended_duration * 60 * 60 -
+                      self.get_current_running_time())
+
   def can_user_submit(self, user_id, task_id):
     if self.state != Contest.STARTED:
       return False

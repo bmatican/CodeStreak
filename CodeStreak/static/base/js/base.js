@@ -4,12 +4,39 @@ $(document).ready(function(){
   $('#facebook-button').click(function() {
     $(this).button('loading');
   });
-});
-$(".alert").alert();
-$(".collapse").collapse()
 
-facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
-function facebookJSLoaded(){
+  $('.alert').alert();
+  $('.collapse').collapse();
+
+  $('#time-left').each(function () {
+    var timeLeft = parseInt($(this).attr('class')),
+        that = this, intervalID = -1;
+    var updateTimeLeft = function () {
+      $(that).html('Time left: ' + formatTimeRemaining(timeLeft));
+      timeLeft -= 1;
+      if (timeLeft < 0) {
+        clearInterval(intervalID);
+        $(that).parent().remove();
+      }
+    };
+    updateTimeLeft();
+    intervalID = setInterval(updateTimeLeft, 1000);
+  });
+});
+
+var formatTimeRemaining = function(rem) {
+  var s = rem % 60;
+  rem = Math.floor(rem / 60);
+  var m = rem % 60;
+  rem = Math.floor(rem / 60);
+  var h = rem;
+  return (("00" + h).slice(-2) + ':' +
+          ("00" + m).slice(-2) + ':' +
+          ("00" + s).slice(-2));
+};
+
+var facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
+function facebookJSLoaded() {
   FB.init({appId: facebookAppId, status: true, cookie: true, xfbml: true, oauth: true});
 }
 window.fbAsyncInit = facebookJSLoaded;
@@ -106,8 +133,8 @@ function taskCallback(feedback, task_no) {
       var message_style = "text-error"
       var doReload = false;
     }
-    response.append('&nbsp;<p id="responsemessage' + task_no + 
-                    '" class="'+message_style+'" style="display:none">' + 
+    response.append('&nbsp;<p id="responsemessage' + task_no +
+                    '" class="'+message_style+'" style="display:none">' +
                     message + '</p>');
     response_message = $('#responsemessage' + task_no);
     response_message.fadeIn('slow', function() {
