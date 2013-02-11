@@ -40,26 +40,6 @@ def contest_list(request):
 
   return HttpResponse(str(page))
 
-@login_required
-def view_task(request, task_id):
-  try:
-    task = Task.get_task(task_id)
-  except Task.DoesNotExist:
-    raise Http404
-
-  title = 'CodeStreak - {}'.format(task.name)
-  content = <x:frag />
-  page = \
-  <cs:page request={request} title={title}>
-    <cs:header />
-    <cs:content>
-      <cs:task-show task={task} />
-    </cs:content>
-    <cs:footer />
-  </cs:page>
-
-  return HttpResponse(str(page))
-
 
 # TODO: Display all tasks if contest is over.
 @login_required
@@ -193,33 +173,15 @@ def logout_view(request):
   return HttpResponseRedirect(url_reverse('contest-list'))
 
 
-def getScores(user, payload):
-  return {
-            'scores' : 'scores',
-         }
-
-
-def can_submit_task(contest_id, user_id, task_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-    is_registered = contest.is_user_registered(user_id)
-    if is_registered:
-      handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
-      return handler.is_task_solvable(task_id)
-    else:
-      return False
-  except Contest.DoesNotExist:
-    return False
-
-
-def submitTask(user, payload):
+def submit_task(user, payload):
   response = {'verdict': 'error'}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
     answer = payload.get('answer')
 
-    if can_submit_task(contest_id, user.id, task_id):
+    contest = Contest.get_contest(contest_id)
+    if contest.can_user_submit(user.id, task_id):
       great_success = Task.check_output(task_id, answer)
 
       if great_success:
@@ -232,36 +194,36 @@ def submitTask(user, payload):
       return response
     else:
       return response
-  except:
+  except Contest.DoesNotExist:
     return response
 
 
-def skipTask(user, payload):
+def skip_task(user, payload):
   response = {'verdict': 'error'}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
 
-    if can_submit_task(contest_id, user.id, task_id):
+    contest = Contest.get_contest(contest_id)
+    if contest.can_user_submit(user.id, task_id):
       Score.skip_task(contest_id, user.id, task_id)
       response['verdict'] = 'skipped'
       return response
     else:
       return response
-  except:
+  except Contest.DoesNotExist:
     return response
 
 
 data_providers = {
-  'skipTask' : skipTask,
-  'submitTask' : submitTask,
+  'skipTask' : skip_task,
+  'submitTask' : submit_task,
 }
 
 
 @require_POST
 @login_required
 def data_provider(request, action):
-  print 'here'
   global data_providers
   if request.is_ajax():
     payload = json.loads(request.POST.get('payload', ''))
@@ -270,7 +232,7 @@ def data_provider(request, action):
       data_function = data_providers.get(action)
       response = data_function(request.user, payload)
     else:
-      print 'Unrecognized action'
+      return {'verdict': 'error', 'message': 'Unrecognized action'}
     if response == None:
       raise Http404
     else:

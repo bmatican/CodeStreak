@@ -224,7 +224,6 @@ class :cs:contest-problem-set(:x:element):
 
             score_str = '{} ({})'.format(
                     score.score, score.format_tries())
-            task_url = url_reverse('task-view', args=(task.id,))
 
             short_name = task.name
             if len(task.name) > 20:

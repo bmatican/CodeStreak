@@ -142,11 +142,23 @@ class Contest(CachingMixin, models.Model):
 
   def get_current_running_time(self):
     if self.state == Contest.UNASSIGNED:
-      return 0
+      return 0.0
     elif self.state == Contest.STARTED:
-      return (now() - self.last_start_date).seconds
+      return self.running_time + (now() - self.last_start_date).total_seconds()
     else:
       return self.running_time
+
+  def can_user_submit(self, user_id, task_id):
+    if self.state != Contest.STARTED:
+      return False
+
+    is_registered = self.is_user_registered(user_id)
+    if not is_registered:
+      return False
+
+    from CodeStreak.contests.utils.tasks import TaskVisibilityHandler
+    handler = TaskVisibilityHandler.from_raw(self.id, user_id)
+    return handler.is_task_solvable(task_id)
 
   def format_intended_duration(self):
     return '{} {}'.format(
