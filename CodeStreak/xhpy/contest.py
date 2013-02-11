@@ -122,46 +122,61 @@ class :cs:task-show(:x:element):
       task = self.getAttribute('task')
       score = self.getAttribute('score')
       participation = Participation.get_entry(score.contest_id, score.user_id)
+
+      if task.input:
+        input_xhp = \
+        <p class="input">
+          <strong>Input</strong><br />
+          <code>{task.input}</code>
+        </p>
+      else:
+        input_xhp = <x:frag />
+
+      if score.solved:
+        output_xhp = \
+        <p class="solved-output">
+          <strong>Output</strong><br />
+          <code>{task.output}</code>
+        </p>
+        submit_button = <x:frag />
+      else:
+        output_xhp = <x:frag />
+        submit_button = \
+        <div class="input-append">
+          <input class="span2" id={"taskanswer"+str(task.id)}
+            type="text" placeholder="Type answer..." />
+          <button class="btn btn-primary" type="button"
+            id={"answerbutton" + str(task.id)}
+            onClick={"submitTask(" +str(task.id) + ")"}
+            data-loading-text="Loading...">
+            Submit!
+          </button>
+        </div>
+
+      if score.can_skip() and participation.skips_left > 0:
+        skip_button = \
+        <div>
+          <button class="btn btn-danger"
+            onclick={"skipTask(" + str(task.id) + ")"}>
+            Skip task
+          </button>
+          <span class="help-inline">You can only do it once per contest!</span>
+        </div>
+      else:
+        skip_button = <x:frag />
+
       page = \
       <div>
-        <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
+        <p><small>{"Difficulty: " + task.get_difficulty_display()}</small></p>
         <strong>Problem</strong>
-        <p>{ task.text } </p>
-        {
-          <div>
-            <strong>Input</strong> <br />
-            <code>{task.input}</code> <br /><br />
-          </div>
-          if task.input else <x:frag />
-        }
+        <p>{task.text}</p>
+        {input_xhp}
+        {output_xhp}
         <ul class="inline">
-          {
-            <li>
-              <div class="input-append">
-                <input class="span2" id={"taskanswer"+str(task.id)}
-                  type="text" placeholder="Type answer..." />
-                <button class="btn btn-primary" type="button"
-                  id={"answerbutton" + str(task.id)}
-                  onClick={"submitTask(" +str(task.id) + ")"}
-                  data-loading-text="Loading...">
-                  Submit!
-                </button>
-              </div>
-            </li>
-            if not score.solved  else <x:frag />
-          }
+          <li>{submit_button}</li>
           <li id={"taskresponse"+str(task.id)}></li>
         </ul>
-        {
-          <div>
-            <button class="btn btn-danger"
-              onclick={"skipTask(" + str(task.id) + ")"}>
-              Skip task
-            </button>
-            <span class="help-inline">You can only do it once per contest!</span>
-          </div>
-          if score.can_skip() and participation.skips_left > 0 else <x:frag />
-        }
+        {skip_button}
       </div>
       return page
 
@@ -281,9 +296,7 @@ class :cs:contest-rankings(:x:element):
                 else:
                     task_score = None
 
-                if task_score == None:
-                    xhp = <span class="badge">-</span>
-                elif task_score.solved:
+                if task_score.solved:
                     xhp = \
                     <x:frag>
                         <span class="badge badge-success">
@@ -296,11 +309,13 @@ class :cs:contest-rankings(:x:element):
                     <span class="badge badge-warning">
                         SK
                     </span>
-                else:
+                elif task_score.tries != 0:
                     xhp = \
                     <span class="badge badge-important">
                         WA ({task_score.format_tries()})
                     </span>
+                else:
+                    xhp = <span class="badge">-</span>
                 task_scores.appendChild(<td class="task-score">{xhp}</td>)
             tbody.appendChild(
                 <tr>
