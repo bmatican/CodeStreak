@@ -101,6 +101,10 @@ function taskCallback(feedback, task_no) {
       var message = "Task skipped. Loading next exercise..."
       var message_style = "text-warning"
       var doReload = true;
+    } else if(feedback.verdict == 'error') {
+      var message = "Server error..."
+      var message_style = "text-error"
+      var doReload = false;
     }
     response.append('&nbsp;<p id="responsemessage' + task_no + 
                     '" class="'+message_style+'" style="display:none">' + 

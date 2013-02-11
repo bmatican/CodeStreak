@@ -206,7 +206,7 @@ def can_submit_task(contest_id, user_id, task_id):
 
 
 def submitTask(user, payload):
-  fail = {}
+  response = {'verdict': 'error'}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
@@ -215,41 +215,34 @@ def submitTask(user, payload):
     if can_submit_task(contest_id, user.id, task_id):
       great_success = Task.check_output(task_id, answer)
 
-      response = None
       if great_success:
         Score.solve_task(contest_id, user.id, task_id)
         # add actual state.
-        response = {
-                     'verdict' : 'success'
-                   }
+        response['verdict'] = 'success'
       else:
         Score.fail_task(contest_id, user.id, task_id)
-        response = {
-                     'verdict' : 'wrong-answer'
-                   }
+        response['verdict'] = 'wrong-answer'
       return response
     else:
-      return fail
+      return response
   except:
-    return fail
+    return response
 
 
 def skipTask(user, payload):
-  fail = {}
+  response = {'verdict': 'error'}
   try:
     task_id = payload.get('task_id')
     contest_id = payload.get('contest_id')
 
     if can_submit_task(contest_id, user.id, task_id):
       Score.skip_task(contest_id, user.id, task_id)
-      
-      return {
-               'verdict' : 'skipped'
-             }
+      response['verdict'] = 'skipped'   
+      return response
     else:
-      return fail
+      return response
   except:
-    return fail
+    return response
 
 
 data_providers = {
