@@ -110,6 +110,7 @@ class :cs:task-show(:x:element):
     def render(self):
       task = self.getAttribute('task')
       score = self.getAttribute('score')
+      participation = Participation.get_entry(score.contest_id, score.user_id)
       page = \
       <div>
         <p> <small> { "Difficulty: " + task.get_difficulty_display() } </small> </p>
@@ -148,7 +149,7 @@ class :cs:task-show(:x:element):
             </button>
             <span class="help-inline">You can only do it once per contest!</span>
           </div>
-          if not score.solved and not score.skipped else <x:frag />
+          if score.can_skip() and participation.skips_left > 0 else <x:frag />
         }
       </div>
       return page

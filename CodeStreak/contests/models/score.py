@@ -74,7 +74,7 @@ class Score(CachingMixin, models.Model):
   def skip_task(cls, contest_id, user_id, task_id):
     entry = cls.get_entry(contest_id, user_id, task_id)
     p = Participation.get_entry(contest_id, user_id)
-    can_skip = not entry.skipped and not entry.solved and p.skips_left > 0
+    can_skip = p.skips_left > 0 and entry.can_skip()
     if can_skip:
       entry.skipped = True
       entry.save()
@@ -82,6 +82,9 @@ class Score(CachingMixin, models.Model):
       LogEntry.skip_task(contest_id, user_id, task_id)
     else:
       raise IntegrityError
+
+  def can_skip(self):
+    return not self.skipped and not self.solved
 
   @classmethod
   def get_scores(cls, contest_id, user_id):
