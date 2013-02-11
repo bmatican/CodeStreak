@@ -56,7 +56,7 @@ class Contest(CachingMixin, models.Model):
   @classmethod
   def get_task_ordering(cls, contest_id):
     return list(enumerate([el['id'] for el in \
-        contest.assigned_tasks.values('id')]))
+        cls.get_contest(contest_id).assigned_tasks.values('id')]))
 
   def register_user(self, user_id):
     p = Participation(
