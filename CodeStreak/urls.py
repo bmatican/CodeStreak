@@ -29,12 +29,20 @@ urlpatterns = patterns('',
       'CodeStreak.contests.views.contest_home',
       name='contest-home'),
 
+  url(r'^contest/(?P<contest_id>\d+)/problems$',
+      'CodeStreak.contests.views.contest_problems',
+      name='contest-problems'),
+
   url(r'^contest/(?P<contest_id>\d+)/ranking$',
       'CodeStreak.contests.views.contest_ranking',
       name='contest-ranking'),
 
+  url(r'^contest/(?P<contest_id>\d+)/users$',
+      'CodeStreak.contests.views.contest_users',
+      name='contest-users'),
+
   url(r'^contest/(?P<contest_id>\d+)/logs$',
-      'CodeStreak.contests.views.logs',
+      'CodeStreak.contests.views.contest_logs',
       name='contest-logs'),
 
   url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {

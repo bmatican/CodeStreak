@@ -41,7 +41,93 @@ def contest_list(request):
   return HttpResponse(str(page))
 
 
-# TODO: Display all tasks if contest is over.
+def _contest_home_problems(request, contest):
+  user_id = request.user.id
+  try:
+    handler = TaskVisibilityHandler.from_raw(contest.id, user_id)
+  except Score.DoesNotExist:
+    raise Http404
+  except Contest.DoesNotExist:
+    raise Http404
+
+  default_task_id = -1
+  task_id_display = request.GET.get('task_id', default_task_id)
+  if not handler.is_task_visible(task_id_display):
+    task_id_display = default_task_id
+
+  content = \
+  <div class="contest-problem-set">
+    <h2>{'{} Problem Set'.format(contest.name)}</h2>
+    <cs:contest-problem-set
+      contest={contest}
+      ordered_tasks={handler.get_visible_tasks()}
+      task_by_id={handler.task_by_id}
+      task_id={task_id_display}
+      score_by_task_id={handler.score_by_task_id} />
+    <script>
+      {'var contestId={};'.format(contest.id)}
+    </script>
+  </div>
+
+  return _contest_home_general(request, contest, content, 'contest-problems')
+
+
+def _contest_home_users(request, contest):
+  content = \
+  <div class="contest-registration-list">
+    <cs:contest-registration-list
+      contest={contest} />
+  </div>
+  return _contest_home_general(request, contest, content, 'contest-users')
+
+
+def _contest_home_ranking(request, contest):
+  limit = request.GET.get('limit')
+  offset = request.GET.get('offset')
+  rankings = Participation.get_rankings(contest.id, limit, offset)
+
+  content = \
+  <div class="contest-rankings">
+    <cs:contest-rankings
+      contest={contest}
+      tasks={contest.assigned_tasks.all()}
+      rankings={rankings} />
+  </div>
+
+  return _contest_home_general(request, contest, content, 'contest-ranking')
+
+
+def _contest_home_logs(request, contest):
+  content = \
+  <div class="contest-activity-log">
+    <h2>{'{} Activity Log'.format(contest.name)}</h2>
+  </div>
+
+  try:
+    entries = LogEntry.get_all_entries(contest.id)
+  except:
+    raise Http404
+
+  for entry in entries:
+    content.appendChild(<cs:log-entry entry={entry} />)
+
+  return _contest_home_general(request, contest, content, 'contest-logs')
+
+
+def _contest_home_general(request, contest, content, active_tab):
+  title = 'CodeStreak - {}'.format(contest.name)
+  page = \
+  <cs:page request={request} title={title}>
+    <cs:header-contest contest={contest} active_tab={active_tab} />
+    <cs:content>
+      {content}
+    </cs:content>
+    <cs:footer />
+  </cs:page>
+
+  return HttpResponse(str(page))
+
+
 @login_required
 def contest_home(request, contest_id):
   try:
@@ -49,41 +135,34 @@ def contest_home(request, contest_id):
   except Contest.DoesNotExist:
     raise Http404
 
-  task_id_display = request.GET.get('task_id', -1)
-
-  title = 'CodeStreak - {}'.format(contest.name)
-  content = <div class="contest-problem-set" />
-  page = \
-  <cs:page request={request} title={title}>
-    <cs:header-contest contest={contest} active_tab="contest-home" />
-    <cs:content>
-      <h2>{'{} Problem Set'.format(contest.name)}</h2>
-      {content}
-      <script>
-        {'var contestId=' + contest_id + ";"}
-      </script>
-    </cs:content>
-    <cs:footer />
-  </cs:page>
-
   if contest.state == Contest.STARTED:
-    user_id = request.user.id
-    try:
-      handler = TaskVisibilityHandler.from_raw(contest_id, user_id)
-    except Score.DoesNotExist:
-      raise Http404
-    except Contest.DoesNotExist:
-      raise Http404
+    return _contest_home_problems(request, contest)
+  elif contest.state == Contest.UNASSIGNED:
+    return _contest_home_users(request, contest)
+  elif contest.state == Contest.PAUSED:
+    raise Http404 #TODO: need to think/implement
+  elif contest.state == Contest.STOPPED:
+    return _contest_home_ranking(request, contest)
+  else:
+    raise Http404 #TODO: just in case
 
-    content.appendChild(
-        <cs:contest-problem-set
-          contest={contest}
-          ordered_tasks={handler.get_visible_tasks()}
-          task_by_id={handler.task_by_id}
-          task_id={task_id_display}
-          score_by_task_id={handler.score_by_task_id} />)
 
-  return HttpResponse(str(page))
+def contest_problems(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  return _contest_home_problems(request, contest)
+
+
+def contest_users(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  return _contest_home_users(request, contest)
 
 
 def contest_ranking(request, contest_id):
@@ -91,29 +170,19 @@ def contest_ranking(request, contest_id):
     contest = Contest.get_contest(contest_id)
   except Contest.DoesNotExist:
     raise Http404
-  limit = request.GET.get('limit')
-  offset = request.GET.get('offset')
 
-  title = 'CodeStreak - {}'.format(contest.name)
-  content = <div class="contest-rankings" />
-  page = \
-  <cs:page request={request} title={title}>
-    <cs:header-contest contest={contest} active_tab="contest-ranking" />
-    <cs:content>
-      <h2>{'{} Ranking'.format(contest.name)}</h2>
-      {content}
-    </cs:content>
-    <cs:footer />
-  </cs:page>
+  return _contest_home_ranking(request, contest)
 
-  rankings = Participation.get_rankings(contest.id, limit, offset)
-  content.appendChild(
-      <cs:contest-rankings
-        contest={contest}
-        tasks={contest.assigned_tasks.all()}
-        rankings={rankings} />)
 
-  return HttpResponse(str(page))
+@login_required
+@staff_member_required
+def contest_logs(request, contest_id):
+  try:
+    contest = Contest.get_contest(contest_id)
+  except Contest.DoesNotExist:
+    raise Http404
+
+  return _contest_home_logs(request, contest)
 
 
 @require_POST
@@ -239,35 +308,3 @@ def data_provider(request, action):
       return HttpResponse(json.dumps(response))
   else:
     raise Http404
-
-
-@login_required
-@staff_member_required
-def logs(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
-  title = 'CodeStreak - {} activity log'.format(contest.name)
-
-  content = <div class="contest-activity-log" />
-  page = \
-  <cs:page request={request} title={title}>
-    <cs:header-contest contest={contest} active_tab="contest-logs" />
-    <cs:content>
-      <h2>{'{} Activity Log'.format(contest.name)}</h2>
-      {content}
-    </cs:content>
-    <cs:footer />
-  </cs:page>
-
-  try:
-    entries = LogEntry.get_all_entries(contest_id)
-  except:
-    raise Http404
-
-  for entry in entries:
-    content.appendChild(<cs:log-entry entry={entry} />)
-
-  return HttpResponse(str(page))

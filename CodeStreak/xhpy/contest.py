@@ -18,7 +18,7 @@ class :cs:header-home(:cs:header):
 class :cs:header-contest(:cs:header):
     attribute object contest @required,
               object user,
-              str active_tab = 'contest-home'
+              str active_tab = 'contest-problems'
 
     def get_time_left(self):
         return self.getAttribute('contest').get_time_left()
@@ -35,10 +35,19 @@ class :cs:header-contest(:cs:header):
                 Contest List
             </cs:header-link>
             <cs:header-separator />
-            <li class="navbar-contest-name">{contest.name}</li>
             <cs:header-link
                 link={url_reverse('contest-home', args=(contest.id,))}
                 active={active_tab == 'contest-home'}>
+                {contest.name}
+            </cs:header-link>
+            <cs:header-link
+                link={url_reverse('contest-users', args=(contest.id,))}
+                active={active_tab == 'contest-users'}>
+                Registered users
+            </cs:header-link>
+            <cs:header-link
+                link={url_reverse('contest-problems', args=(contest.id,))}
+                active={active_tab == 'contest-problems'}>
                 Problems
             </cs:header-link>
             <cs:header-link
@@ -260,7 +269,7 @@ class :cs:contest-rankings(:x:element):
         header_tasks = <x:frag />
         for task in tasks:
             task_url = '{}?task_id={}'.format(
-                url_reverse('contest-home', args=(contest.id,)), task.id)
+                url_reverse('contest-problems', args=(contest.id,)), task.id)
             header_tasks.appendChild(
                 <th class="task-score">
                     <a href={task_url}>
@@ -273,7 +282,7 @@ class :cs:contest-rankings(:x:element):
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>Team</th>
+                    <th>User</th>
                     {header_tasks}
                     <th>Score</th>
                 </tr>
@@ -328,6 +337,35 @@ class :cs:contest-rankings(:x:element):
         return table
 
 
+class :cs:contest-registration-list(:x:element):
+    attribute object contest @required,
+    children empty
+
+    def render(self):
+      contest = self.getAttribute('contest')
+
+      tbody = <tbody />
+      table = \
+      <table class="table table-striped table-bordered">
+          <thead>
+              <tr>
+                  <th>User</th>
+              </tr>
+          </thead>
+          {tbody}
+      </table>
+
+      for user in contest.registered_users.all():
+        tbody.appendChild(
+          <tr>
+            <td>
+              <cs:user user={user} />
+            </td>
+          </tr>)
+
+      return table
+
+
 class :cs:log-entry(:x:element):
     attribute LogEntry entry @required
 
@@ -371,4 +409,5 @@ class :cs:log-entry(:x:element):
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
            "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
            "xhpy_cs__contest_rankings", "xhpy_cs__task_show",
+           "xhpy_cs__contest_registration_list",
            "xhpy_cs__log_entry"]
