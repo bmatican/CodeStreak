@@ -104,7 +104,7 @@ class :cs:header(:x:element):
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                     <cs:user user={user} />
                 </a>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu">
                     <li>
                         <a tabindex="-1" href="#">
                             View Profile (coming soon)
@@ -112,7 +112,8 @@ class :cs:header(:x:element):
                     </li>
                     <li class="divider"></li>
                     <li>
-                        <a tabindex="-1" href={settings.LOGOUT_URL}>
+                        <a tabindex="-1" href={settings.LOGOUT_URL}
+                            class="post-link">
                             Log out
                         </a>
                     </li>
@@ -159,29 +160,18 @@ class :cs:header(:x:element):
 class :cs:header-link(:x:element):
     attribute str link @required,
               bool active = False,
-              bool post = False,
-              object request
+              bool post = False
     children any
 
     def render(self):
-        xhp = <li />
+        a_xhp = \
+        <a href={self.getAttribute('link')}>
+            {self.getChildren()}
+        </a>
         if self.getAttribute('post'):
-            if not self.getAttribute('request'):
-                raise Exception('request attribute required for post links')
-            xhp.appendChild(
-                <form class="form-post-link" method="post"
-                    action={self.getAttribute('link')}>
-                    <cs:csrf request={self.getAttribute('request')} />
-                    <button class="btn btn-link">
-                        {self.getChildren()}
-                    </button>
-                </form>)
-        else:
-            xhp.appendChild(
-                <a href={self.getAttribute('link')}>
-                    {self.getChildren()}
-                </a>)
+            a_xhp.setAttribute('class', 'post-link')
 
+        xhp = <li>{a_xhp}</li>
         if self.getAttribute('active'):
             xhp.setAttribute('class', 'active')
 

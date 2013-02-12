@@ -74,7 +74,7 @@ class :cs:header-contest(:cs:header):
                 link = url_reverse('contest-register', args=(contest.id,))
             prepended_children.appendChild(
                 <cs:header-link
-                    link={link} post={True} request={request}
+                    link={link} post={True}
                     active={active_tab == 'contest-register'}>
                     {content}
                 </cs:header-link>)
@@ -170,7 +170,7 @@ class :cs:task-show(:x:element):
                 type="text" placeholder="Type answer..." />
               <button class="btn btn-primary" type="button"
                 id={"answerbutton" + str(task.id)}
-                onClick={"submitTask(" +str(task.id) + ")"}
+                onclick={"submitTask(" +str(task.id) + ")"}
                 data-loading-text="Loading...">
                 Submit!
               </button>

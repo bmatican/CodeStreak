@@ -112,7 +112,8 @@ def _contest_home_problems(request, contest):
     if is_registered:
       return _contest_home_problems_registered(request, contest)
     else:
-      perror('Contest is underway; problems are not available!')
+      perror('Contest is underway and you have not registered; ' +
+             'problems will be available at the end of the contest!')
   elif contest.state == Contest.PAUSED:
     if is_registered:
       perror('Contest is paused; problems are not available!')
@@ -180,7 +181,7 @@ def _contest_home_admin(request, contest):
     button_form = <x:frag />
   else:
     button_form = \
-    <form class="pull-right" method="POST"
+    <form class="pull-right" method="post"
       action={url_reverse(button_action, args=(contest.id,))}>
       <cs:csrf request={request} />
       {button}

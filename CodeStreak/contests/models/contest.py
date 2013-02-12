@@ -134,8 +134,8 @@ class Contest(CachingMixin, models.Model):
   @transaction.commit_on_success
   def pause(self, admin_user_id=None):
     if self.state is Contest.STARTED:
-      self.state = Contest.PAUSED
       self.running_time = self.get_current_running_time()
+      self.state = Contest.PAUSED
       self.save()
       LogEntry.pause_contest(self.id, admin_user_id)
     else:

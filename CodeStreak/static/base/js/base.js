@@ -1,12 +1,22 @@
 $(document).ready(function(){
   $('#facebook-button').button();
-
   $('#facebook-button').click(function() {
     $(this).button('loading');
   });
 
   $('.alert').alert();
   $('.collapse').collapse();
+
+  $('.post-link').click(function (e) {
+    $('<form></form>')
+      .attr('method', 'post')
+      .attr('action', $(this).attr('href'))
+      .append(
+        $('<input type="hidden" name="csrfmiddlewaretoken" />')
+          .attr('value', csrftoken))
+      .submit();
+    return false;
+  });
 
   $('#time-left').each(function () {
     var timeLeft = parseInt($(this).attr('class')),
@@ -46,7 +56,6 @@ F.load();
 function showAlert(message) {
   $('#alerts').append('<div class="alert alert-info"><button data-dismiss="alert" type="button" class="close">x</button>' + message + '</div>');
 }
-
 
 function getCookie(name) {
     var cookieValue = null;
