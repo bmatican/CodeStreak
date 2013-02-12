@@ -74,7 +74,7 @@ class :cs:header-contest(:cs:header):
                 link = url_reverse('contest-register', args=(contest.id,))
             prepended_children.appendChild(
                 <cs:header-link
-                    link={link}
+                    link={link} post={True} request={request}
                     active={active_tab == 'contest-register'}>
                     {content}
                 </cs:header-link>)

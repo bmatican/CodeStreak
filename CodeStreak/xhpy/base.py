@@ -158,16 +158,29 @@ class :cs:header(:x:element):
 
 class :cs:header-link(:x:element):
     attribute str link @required,
-              bool active = False
+              bool active = False,
+              bool post = False,
+              object request
     children any
 
     def render(self):
-        xhp = \
-        <li>
-            <a href={self.getAttribute('link')}>
-                {self.getChildren()}
-            </a>
-        </li>
+        xhp = <li />
+        if self.getAttribute('post'):
+            if not self.getAttribute('request'):
+                raise Exception('request attribute required for post links')
+            xhp.appendChild(
+                <form class="form-post-link" method="post"
+                    action={self.getAttribute('link')}>
+                    <cs:csrf request={self.getAttribute('request')} />
+                    <button class="btn btn-link">
+                        {self.getChildren()}
+                    </button>
+                </form>)
+        else:
+            xhp.appendChild(
+                <a href={self.getAttribute('link')}>
+                    {self.getChildren()}
+                </a>)
 
         if self.getAttribute('active'):
             xhp.setAttribute('class', 'active')

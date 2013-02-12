@@ -16,11 +16,6 @@ from CodeStreak.contests.models import *
 from CodeStreak.contests.utils.tasks import *
 
 
-# FIXME: Remove when POST requests is properly supported
-def require_POST(f):
-    return f
-
-
 def contest_decorator(f):
   def wrap(request, contest_id, *args, **kwargs):
     try:
