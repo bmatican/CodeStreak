@@ -47,14 +47,20 @@ def contest_list(request):
   return HttpResponse(str(page))
 
 
-def _contest_home_problems(request, contest):
+def _contest_home_problems_unregistered(request, contest):
+  messages.error(request, 'Unimplemented yet...')
+  contest_url = url_reverse('contest-home', args=(contest.id,))
+  return HttpResponseRedirect(contest_url)
+
+
+def _contest_home_problems_registered(request, contest, see_all=False):
   user_id = request.user.id
   try:
     handler = TaskVisibilityHandler.from_raw(contest.id, user_id)
   except Score.DoesNotExist:
     raise Http404
 
-  if contest.is_stopped():
+  if see_all == True:
     visible_tasks = contest.assigned_tasks.all()
     visible_tasks = [(i, visible_tasks[i].id) \
         for i in xrange(len(visible_tasks))]
@@ -84,6 +90,46 @@ def _contest_home_problems(request, contest):
   return _contest_home_general(request, contest, content, 'contest-problems')
 
 
+def _contest_home_problems(request, contest):
+  def perror(message):
+    messages.error(request, message)
+
+  user = request.user
+  is_registered = user.is_authenticated() \
+      and contest.is_user_registered(user.id)
+  contest_url = url_reverse('contest-home', args=(contest.id,))
+
+  if contest.state == Contest.UNASSIGNED:
+    if not user.is_authenticated():
+      #TODO: need to flag login somehow...flash button? :)
+      perror('You need to login first!')
+    elif contest.is_user_registered(user.id):
+      #TODO: need to flag registration somehow...flash button? :)
+      perror('You need to register first!')
+    else:
+      perror('Contest has not started yet; problems are not available!')
+  elif contest.state == Contest.STARTED:
+    if is_registered:
+      return _contest_home_problems_registered(request, contest)
+    else:
+      perror('Contest is underway; problems are not available!')
+  elif contest.state == Contest.PAUSED:
+    if is_registered:
+      perror('Contest is paused; problems are not available!')
+    else:
+      #TODO: not really sure what to do here...
+      perror('Contest is underway; problems are not available!')
+  elif contest.state == Contest.STOPPED:
+    if is_registered:
+      return _contest_home_problems_registered(request, contest, True)
+    else:
+      return _contest_home_problems_unregistered(request, contest)
+  else:
+    perror('Server error...')
+
+  return HttpResponseRedirect(contest_url)
+
+
 def _contest_home_ranking(request, contest):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
@@ -108,11 +154,13 @@ def _contest_home_ranking(request, contest):
 
 def _contest_home_admin(request, contest):
   button = <x:frag />
-  stopped = False
-  if contest.state == Contest.UNASSIGNED and \
-     contest.intended_start_date <= now():
-    button = <button class="btn btn-success">Start</button>
-    button_action = 'contest-start'
+  show_nothing = False
+  if contest.state == Contest.UNASSIGNED:
+    if contest.intended_start_date <= now():
+      button = <button class="btn btn-success">Start</button>
+      button_action = 'contest-start'
+    else:
+      show_nothing = True
   elif contest.state == Contest.STARTED:
     if contest.get_time_left() > 0.0:
       button = <button class="btn btn-warning">Pause</button>
@@ -124,11 +172,11 @@ def _contest_home_admin(request, contest):
     button = <button class="btn btn-success">Resume</button>
     button_action = 'contest-start'
   elif contest.state == Contest.STOPPED:
-    stopped = True #TODO: could just be defined as state...
+    show_nothing = True
   else:
     raise Http404 #TODO: just in case of inconsistency...
 
-  if stopped == True:
+  if show_nothing == True:
     button_form = <x:frag />
   else:
     button_form = \
@@ -169,26 +217,25 @@ def _contest_home_general(request, contest, content, active_tab):
   return HttpResponse(str(page))
 
 
-@login_required
 @contest_decorator
 def contest_home(request, contest):
-  if contest.state == Contest.STARTED:
-    return _contest_home_problems(request, contest)
-  elif contest.state == Contest.UNASSIGNED \
-      or contest.state == Contest.STOPPED:
+  if not request.user.is_authenticated() \
+      or not contest.is_user_registered(request.user.id):
     return _contest_home_ranking(request, contest)
-  elif contest.state == Contest.PAUSED:
-    raise Http404 #TODO: need to think/implement
   else:
-    raise Http404 #TODO: just in case
+    if contest.state == Contest.STARTED:
+      return _contest_home_problems(request, contest)
+    elif contest.state == Contest.UNASSIGNED \
+        or contest.state == Contest.STOPPED \
+        or contest.state == Contest.PAUSED:
+      return _contest_home_ranking(request, contest)
+    else:
+      raise Http404 #TODO: just in case
 
 
 @contest_decorator
 def contest_problems(request, contest):
-  if contest.can_user_view_problems(request.user):
-    return _contest_home_problems(request, contest)
-  else:
-    raise Http404
+  return _contest_home_problems(request, contest)
 
 
 @contest_decorator
