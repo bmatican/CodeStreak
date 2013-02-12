@@ -17,7 +17,7 @@ class :cs:header-home(:cs:header):
 
 class :cs:header-contest(:cs:header):
     attribute object contest @required,
-              object user,
+              object request,
               str active_tab = 'contest-problems'
 
     def get_time_left(self):
@@ -28,7 +28,8 @@ class :cs:header-contest(:cs:header):
 
     def get_prepended_children(self):
         contest = self.getAttribute('contest')
-        user = self.getAttribute('user')
+        request = self.getAttribute('request')
+        user = request.user
         active_tab = self.getAttribute('active_tab')
 
         prepended_children = \

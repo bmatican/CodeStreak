@@ -38,7 +38,7 @@ class LogEntry(CachingMixin, models.Model):
       limit = 30
     start = int(offset)
     end = int(offset) + int(limit)
-    return cls.objects.all()[start:end]
+    return cls.objects.filter(contest__id=contest_id)[start:end]
 
   @classmethod
   def _make_contest_entry(cls, contest_id, type, user_id):

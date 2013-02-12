@@ -1,9 +1,8 @@
 # Copyright 2012 Bogdan-Cristian Tataroiu
 
+from django.core.context_processors import csrf
 from django.conf import settings
 from django.contrib import messages
-from django.template import Context, loader
-from django.template.context import RequestContext
 from django_facebook.models import FacebookProfile
 
 from CodeStreak.xhpy.lib import *
@@ -36,6 +35,8 @@ class :cs:page(:x:element):
         request = self.getAttribute('request')
         # Compose body of page
         for child in self.getChildren():
+            if 'request' in child._xhpyAttributeDeclaration():
+                child.setAttribute('request', request)
             if 'user' in child._xhpyAttributeDeclaration():
                 child.setAttribute('user', request.user)
             if 'messages' in child._xhpyAttributeDeclaration():
@@ -84,7 +85,7 @@ class :cs:page(:x:element):
 
 class :cs:header(:x:element):
     attribute float time_left,
-              object user
+              object request
     children :cs:header-link*, :cs:header-separator*
 
     def get_prepended_children(self):
@@ -94,7 +95,8 @@ class :cs:header(:x:element):
         return self.getAttribute('time_left')
 
     def render(self):
-        user = self.getAttribute('user')
+        request = self.getAttribute('request')
+        user = request.user
         time_left = self.get_time_left()
         if user.is_authenticated():
             user_info = \
@@ -254,3 +256,13 @@ class :cs:user(:x:element):
               if fb_image else <x:frag />}
             {user_displayname}
         </span>
+
+
+class :cs:csrf(:x:element):
+    attribute object request @required
+    children empty
+
+    def render(self):
+        csrf_token = csrf(self.getAttribute('request'))['csrf_token']
+        return \
+        <input type="hidden" name="csrfmiddlewaretoken" value={csrf_token} />

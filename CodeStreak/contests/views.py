@@ -1,12 +1,13 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.db import transaction, IntegrityError
-from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
-from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse as url_reverse
+from django.db import transaction, IntegrityError
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.views.decorators.http import require_POST
-from django.core.urlresolvers import reverse as url_reverse
+from django.utils.timezone import now
 
 import json
 
@@ -108,8 +109,31 @@ def _contest_home_ranking(request, contest):
 
 
 def _contest_home_admin(request, contest):
+  button = <x:frag />
+  if contest.state == Contest.UNASSIGNED and \
+     contest.intended_start_date <= now():
+    button = <button class="btn btn-success">Start</button>
+    button_action = 'contest-start'
+  elif contest.state == Contest.STARTED:
+    if contest.get_time_left() > 0.0:
+      button = <button class="btn btn-warning">Pause</button>
+      button_action = 'contest-pause'
+    else:
+      button = <button class="btn btn-danger">Stop</button>
+      button_action = 'contest-stop'
+  elif contest.state == Contest.PAUSED:
+    button = <button class="btn btn-success">Resume</button>
+    button_action = 'contest-start'
+  button_form = \
+  <form class="pull-right" method="POST"
+    action={url_reverse(button_action, args=(contest.id,))}>
+    <cs:csrf request={request} />
+    {button}
+  </form>
+
   content = \
   <div class="contest-activity-log">
+    {button_form}
     <h2>{'{} Activity Log'.format(contest.name)}</h2>
   </div>
 
