@@ -64,10 +64,9 @@ class Contest(CachingMixin, models.Model):
   def get_contest(cls, contest_id):
     return cls.objects.get(id=contest_id)
 
-  @classmethod
-  def get_task_ordering(cls, contest_id):
+  def get_task_ordering(self):
     return list(enumerate([el['id'] for el in \
-        cls.get_contest(contest_id).assigned_tasks.values('id')]))
+        self.assigned_tasks.values('id')]))
 
   def register_user(self, user_id):
     if self.state == Contest.UNASSIGNED:
@@ -89,6 +88,15 @@ class Contest(CachingMixin, models.Model):
   def is_user_registered(self, user_id):
     return {'id': user_id} in self.registered_users.values('id')
 
+  def is_registration_open(self):
+    return self.state == Contest.UNASSIGNED
+
+  def is_started(self):
+    return self.state != Contest.UNASSIGNED
+
+  def is_stopped(self):
+    return self.state == Contest.STOPPED
+
   def get_registered_user_count(self):
     return self.registered_users.count()
 
@@ -96,7 +104,7 @@ class Contest(CachingMixin, models.Model):
     return self.assigned_tasks.count()
 
   def _preset_scores(self):
-    order = self.get_task_ordering(self.id)
+    order = self.get_task_ordering()
     for u in self.registered_users.all():
       for _, task_id in order:
         Score.create_entry(self.id, u.id, task_id)
@@ -165,6 +173,12 @@ class Contest(CachingMixin, models.Model):
     from CodeStreak.contests.utils.tasks import TaskVisibilityHandler
     handler = TaskVisibilityHandler.from_raw(self.id, user_id)
     return handler.is_task_solvable(task_id)
+
+  def can_user_view_problems(self, user):
+    return self.is_started()
+
+  def can_user_view_logs(self, user):
+    return user.is_staff
 
   def format_intended_duration(self):
     return '{} {}'.format(

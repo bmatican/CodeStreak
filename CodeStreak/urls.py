@@ -46,10 +46,6 @@ urlpatterns = patterns('',
       'CodeStreak.contests.views.contest_ranking',
       name='contest-ranking'),
 
-  url(r'^contest/(?P<contest_id>\d+)/users$',
-      'CodeStreak.contests.views.contest_users',
-      name='contest-users'),
-
   url(r'^contest/(?P<contest_id>\d+)/admin$',
       'CodeStreak.contests.views.contest_admin',
       name='contest-admin'),

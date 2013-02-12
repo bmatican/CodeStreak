@@ -32,6 +32,23 @@ class :cs:header-contest(:cs:header):
         user = request.user
         active_tab = self.getAttribute('active_tab')
 
+        if contest.can_user_view_problems(user):
+            header_problems = \
+            <cs:header-link
+                link={url_reverse('contest-problems', args=(contest.id,))}
+                active={active_tab == 'contest-problems'}>
+                Problems
+            </cs:header-link>
+        else:
+            header_problems = <x:frag />
+
+        header_ranking = \
+        <cs:header-link
+            link={url_reverse('contest-ranking', args=(contest.id,))}
+            active={active_tab == 'contest-ranking'}>
+            Rankings
+        </cs:header-link>
+
         prepended_children = \
         <x:frag>
             <cs:header-link
@@ -44,23 +61,11 @@ class :cs:header-contest(:cs:header):
                 active={active_tab == 'contest-home'}>
                 {contest.name}
             </cs:header-link>
-            <cs:header-link
-                link={url_reverse('contest-users', args=(contest.id,))}
-                active={active_tab == 'contest-users'}>
-                Registered users
-            </cs:header-link>
-            <cs:header-link
-                link={url_reverse('contest-problems', args=(contest.id,))}
-                active={active_tab == 'contest-problems'}>
-                Problems
-            </cs:header-link>
-            <cs:header-link
-                link={url_reverse('contest-ranking', args=(contest.id,))}
-                active={active_tab == 'contest-ranking'}>
-                Rankings
-            </cs:header-link>
+            {header_problems}
+            {header_ranking}
         </x:frag>
-        if user.is_authenticated() and contest.state == Contest.UNASSIGNED:
+
+        if user.is_authenticated() and contest.is_registration_open():
             if contest.is_user_registered(user.id):
                 content = 'Unregister'
                 link = url_reverse('contest-unregister', args=(contest.id,))
@@ -73,7 +78,7 @@ class :cs:header-contest(:cs:header):
                     active={active_tab == 'contest-register'}>
                     {content}
                 </cs:header-link>)
-        if user.is_staff:
+        if contest.can_user_view_logs(user):
           content = 'Admin'
           link = url_reverse('contest-admin', args=(contest.id,))
           prepended_children.appendChild(
@@ -136,6 +141,7 @@ class :cs:task-show(:x:element):
     def render(self):
       task = self.getAttribute('task')
       score = self.getAttribute('score')
+      contest = score.contest
       participation = Participation.get_entry(score.contest_id, score.user_id)
 
       if task.input:
@@ -147,28 +153,35 @@ class :cs:task-show(:x:element):
       else:
         input_xhp = <x:frag />
 
+      output_xhp = <x:frag />
+      submit_button = <x:frag />
       if score.solved:
         output_xhp = \
         <p class="solved-output">
           <strong>Output</strong><br />
           <code>{task.output}</code>
         </p>
-        submit_button = <x:frag />
-      else:
-        output_xhp = <x:frag />
+      elif not contest.is_stopped():
         submit_button = \
-        <div class="input-append">
-          <input class="span2" id={"taskanswer"+str(task.id)}
-            type="text" placeholder="Type answer..." />
-          <button class="btn btn-primary" type="button"
-            id={"answerbutton" + str(task.id)}
-            onClick={"submitTask(" +str(task.id) + ")"}
-            data-loading-text="Loading...">
-            Submit!
-          </button>
-        </div>
+        <ul class="inline">
+          <li>
+            <div class="input-append">
+              <input class="span2" id={"taskanswer"+str(task.id)}
+                type="text" placeholder="Type answer..." />
+              <button class="btn btn-primary" type="button"
+                id={"answerbutton" + str(task.id)}
+                onClick={"submitTask(" +str(task.id) + ")"}
+                data-loading-text="Loading...">
+                Submit!
+              </button>
+            </div>
+          </li>
+          <li id={"taskresponse"+str(task.id)}></li>
+        </ul>
 
-      if score.can_skip() and participation.skips_left > 0:
+      skip_button = <x:frag />
+      if not contest.is_stopped() and score.can_skip() \
+          and participation.skips_left > 0:
         skip_button = \
         <div>
           <button class="btn btn-danger"
@@ -177,8 +190,6 @@ class :cs:task-show(:x:element):
           </button>
           <span class="help-inline">You can only do it once per contest!</span>
         </div>
-      else:
-        skip_button = <x:frag />
 
       page = \
       <div>
@@ -187,10 +198,7 @@ class :cs:task-show(:x:element):
         <p>{task.text}</p>
         {input_xhp}
         {output_xhp}
-        <ul class="inline">
-          <li>{submit_button}</li>
-          <li id={"taskresponse"+str(task.id)}></li>
-        </ul>
+        {submit_button}
         {skip_button}
       </div>
       return page
@@ -205,10 +213,10 @@ class :cs:contest-problem-set(:x:element):
     children empty
 
     def render(self):
-        # ordered_tasks is actually visible tasks!
-        task_content = <div class="tab-content"></div>
-        task_nav = <ul class="nav nav-tabs"></ul>
-        display_task_id = int(self.getAttribute('task_id'))
+        #TODO: ordered_tasks is actually visible tasks!
+        task_content = <div class="tab-content" />
+        task_nav = <ul class="nav nav-tabs" />
+        display_task_id = self.getAttribute('task_id')
         response = \
         <div class="tabbable tabs-left">
           {task_nav}
@@ -341,35 +349,6 @@ class :cs:contest-rankings(:x:element):
         return table
 
 
-class :cs:contest-registration-list(:x:element):
-    attribute object contest @required,
-    children empty
-
-    def render(self):
-      contest = self.getAttribute('contest')
-
-      tbody = <tbody />
-      table = \
-      <table class="table table-striped table-bordered">
-          <thead>
-              <tr>
-                  <th>User</th>
-              </tr>
-          </thead>
-          {tbody}
-      </table>
-
-      for user in contest.registered_users.all():
-        tbody.appendChild(
-          <tr>
-            <td>
-              <cs:user user={user} />
-            </td>
-          </tr>)
-
-      return table
-
-
 class :cs:log-entry(:x:element):
     attribute LogEntry entry @required
 
@@ -413,5 +392,4 @@ class :cs:log-entry(:x:element):
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
            "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
            "xhpy_cs__contest_rankings", "xhpy_cs__task_show",
-           "xhpy_cs__contest_registration_list",
            "xhpy_cs__log_entry"]

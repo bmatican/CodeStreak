@@ -59,6 +59,14 @@ def _contest_home_problems(request, contest):
   except Score.DoesNotExist:
     raise Http404
 
+  if contest.is_stopped():
+    visible_tasks = contest.assigned_tasks.all()
+    visible_tasks = [(i, visible_tasks[i].id) \
+        for i in xrange(len(visible_tasks))]
+  else:
+    visible_tasks = handler.get_visible_tasks()
+
+
   default_task_id = -1
   task_id_display = int(request.GET.get('task_id', default_task_id))
   if not handler.is_task_visible(task_id_display):
@@ -69,7 +77,7 @@ def _contest_home_problems(request, contest):
     <h2>{'{} Problem Set'.format(contest.name)}</h2>
     <cs:contest-problem-set
       contest={contest}
-      ordered_tasks={handler.get_visible_tasks()}
+      ordered_tasks={visible_tasks}
       task_by_id={handler.task_by_id}
       task_id={task_id_display}
       score_by_task_id={handler.score_by_task_id} />
@@ -81,27 +89,22 @@ def _contest_home_problems(request, contest):
   return _contest_home_general(request, contest, content, 'contest-problems')
 
 
-def _contest_home_users(request, contest):
-  content = \
-  <div class="contest-registration-list">
-    <h2>{'{} Registered Users'.format(contest.name)}</h2>
-    <cs:contest-registration-list
-      contest={contest} />
-  </div>
-  return _contest_home_general(request, contest, content, 'contest-users')
-
-
 def _contest_home_ranking(request, contest):
   limit = request.GET.get('limit')
   offset = request.GET.get('offset')
+
   rankings = Participation.get_rankings(contest.id, limit, offset)
+  if contest.is_started():
+    tasks = contest.assigned_tasks.all()
+  else:
+    tasks = []
 
   content = \
   <div class="contest-rankings">
     <h2>{'{} Rankings'.format(contest.name)}</h2>
     <cs:contest-rankings
       contest={contest}
-      tasks={contest.assigned_tasks.all()}
+      tasks={tasks}
       rankings={rankings} />
   </div>
 
@@ -110,6 +113,7 @@ def _contest_home_ranking(request, contest):
 
 def _contest_home_admin(request, contest):
   button = <x:frag />
+  stopped = False
   if contest.state == Contest.UNASSIGNED and \
      contest.intended_start_date <= now():
     button = <button class="btn btn-success">Start</button>
@@ -124,12 +128,20 @@ def _contest_home_admin(request, contest):
   elif contest.state == Contest.PAUSED:
     button = <button class="btn btn-success">Resume</button>
     button_action = 'contest-start'
-  button_form = \
-  <form class="pull-right" method="POST"
-    action={url_reverse(button_action, args=(contest.id,))}>
-    <cs:csrf request={request} />
-    {button}
-  </form>
+  elif contest.state == Contest.STOPPED:
+    stopped = True #TODO: could just be defined as state...
+  else:
+    raise Http404 #TODO: just in case of inconsistency...
+
+  if stopped == True:
+    button_form = <x:frag />
+  else:
+    button_form = \
+    <form class="pull-right" method="POST"
+      action={url_reverse(button_action, args=(contest.id,))}>
+      <cs:csrf request={request} />
+      {button}
+    </form>
 
   content = \
   <div class="contest-activity-log">
@@ -167,24 +179,21 @@ def _contest_home_general(request, contest, content, active_tab):
 def contest_home(request, contest):
   if contest.state == Contest.STARTED:
     return _contest_home_problems(request, contest)
-  elif contest.state == Contest.UNASSIGNED:
-    return _contest_home_users(request, contest)
+  elif contest.state == Contest.UNASSIGNED \
+      or contest.state == Contest.STOPPED:
+    return _contest_home_ranking(request, contest)
   elif contest.state == Contest.PAUSED:
     raise Http404 #TODO: need to think/implement
-  elif contest.state == Contest.STOPPED:
-    return _contest_home_ranking(request, contest)
   else:
     raise Http404 #TODO: just in case
 
 
 @contest_decorator
 def contest_problems(request, contest):
-  return _contest_home_problems(request, contest)
-
-
-@contest_decorator
-def contest_users(request, contest):
-  return _contest_home_users(request, contest)
+  if contest.can_user_view_problems(request.user):
+    return _contest_home_problems(request, contest)
+  else:
+    raise Http404
 
 
 @contest_decorator
@@ -195,7 +204,10 @@ def contest_ranking(request, contest):
 @staff_member_required
 @contest_decorator
 def contest_admin(request, contest):
-  return _contest_home_admin(request, contest)
+  if contest.can_user_view_logs(request.user):
+    return _contest_home_admin(request, contest)
+  else:
+    raise Http404 #TODO: this should be useless, due to decorator
 
 
 @require_POST

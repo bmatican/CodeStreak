@@ -26,7 +26,8 @@ class TaskVisibilityHandler:
     '''
 
     scores = Score.get_scores(contest_id, user_id)
-    indexed_task_ids = Contest.get_task_ordering(contest_id)
+    contest = Contest.get_contest(contest_id)
+    indexed_task_ids = contest.get_task_ordering()
 
     done_task_ids = []
     task_by_id = {}
