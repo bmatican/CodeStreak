@@ -5,7 +5,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.shortcuts import render_to_response
-from django.http import Http404
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse as url_reverse
 
@@ -19,6 +18,17 @@ from CodeStreak.contests.utils.tasks import *
 # FIXME: Remove when POST requests is properly supported
 def require_POST(f):
     return f
+
+
+def contest_decorator(f):
+  def wrap(request, contest_id, *args, **kwargs):
+    try:
+      contest = Contest.get_contest(contest_id, *args, **kwargs)
+    except Contest.DoesNotExist:
+      raise Http404
+
+    return f(request, contest)
+  return wrap
 
 
 def contest_list(request):
@@ -46,8 +56,6 @@ def _contest_home_problems(request, contest):
   try:
     handler = TaskVisibilityHandler.from_raw(contest.id, user_id)
   except Score.DoesNotExist:
-    raise Http404
-  except Contest.DoesNotExist:
     raise Http404
 
   default_task_id = -1
@@ -99,7 +107,7 @@ def _contest_home_ranking(request, contest):
   return _contest_home_general(request, contest, content, 'contest-ranking')
 
 
-def _contest_home_logs(request, contest):
+def _contest_home_admin(request, contest):
   content = \
   <div class="contest-activity-log">
     <h2>{'{} Activity Log'.format(contest.name)}</h2>
@@ -113,7 +121,7 @@ def _contest_home_logs(request, contest):
   for entry in entries:
     content.appendChild(<cs:log-entry entry={entry} />)
 
-  return _contest_home_general(request, contest, content, 'contest-logs')
+  return _contest_home_general(request, contest, content, 'contest-admin')
 
 
 def _contest_home_general(request, contest, content, active_tab):
@@ -131,12 +139,8 @@ def _contest_home_general(request, contest, content, active_tab):
 
 
 @login_required
-def contest_home(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
+@contest_decorator
+def contest_home(request, contest):
   if contest.state == Contest.STARTED:
     return _contest_home_problems(request, contest)
   elif contest.state == Contest.UNASSIGNED:
@@ -149,42 +153,25 @@ def contest_home(request, contest_id):
     raise Http404 #TODO: just in case
 
 
-def contest_problems(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
+@contest_decorator
+def contest_problems(request, contest):
   return _contest_home_problems(request, contest)
 
 
-def contest_users(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
+@contest_decorator
+def contest_users(request, contest):
   return _contest_home_users(request, contest)
 
 
-def contest_ranking(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
+@contest_decorator
+def contest_ranking(request, contest):
   return _contest_home_ranking(request, contest)
 
 
-@login_required
 @staff_member_required
-def contest_logs(request, contest_id):
-  try:
-    contest = Contest.get_contest(contest_id)
-  except Contest.DoesNotExist:
-    raise Http404
-
-  return _contest_home_logs(request, contest)
+@contest_decorator
+def contest_admin(request, contest):
+  return _contest_home_admin(request, contest)
 
 
 @require_POST
@@ -193,15 +180,13 @@ def contest_logs(request, contest_id):
 # starts. Since we have logic which creates db objects based on the set of
 # registered users we need to avoid race conditions.
 @transaction.commit_on_success
-def register_to_contest(request, contest_id):
+@contest_decorator
+def register_to_contest(request, contest):
+  contest_url = url_reverse('contest-home', args=(contest.id,))
   try:
-    contest = Contest.get_contest(contest_id)
-    contest_url = url_reverse('contest-home', args=(contest_id,))
     contest.register_user(request.user.id)
     messages.info(request,
         'Registration complete for {}'.format(contest.name))
-  except Contest.DoesNotExist:
-    raise Http404
   except ContestStartedException:
     messages.error(request, 'The contest has already started!')
   except IntegrityError:
@@ -213,19 +198,65 @@ def register_to_contest(request, contest_id):
 @require_POST
 @login_required
 @transaction.commit_on_success
-def unregister_from_contest(request, contest_id):
+@contest_decorator
+def unregister_from_contest(request, contest):
+  contest_url = url_reverse('contest-home', args=(contest.id,))
   try:
-    contest = Contest.get_contest(contest_id)
-    contest_url = url_reverse('contest-home', args=(contest_id,))
     contest.unregister_user(request.user.id)
     messages.info(request,
         'You are no longer registered for {}'.format(contest.name))
-  except Contest.DoesNotExist:
-    raise Http404
   except ContestStartedException:
     messages.error(request, 'The contest has already started!')
   except Participation.DoesNotExist:
     messages.error(request, 'You are not signed up for this contest!')
+
+  return HttpResponseRedirect(contest_url)
+
+
+@require_POST
+@staff_member_required
+@transaction.commit_on_success
+@contest_decorator
+def start_contest(request, contest):
+  contest_url = url_reverse('contest-admin', args=(contest.id,))
+  try:
+    contest.start(request.user.id)
+    messages.info(request,
+        'Contest {} started'.format(contest.name))
+  except ContestStartedException:
+    messages.error(request, 'The contest is already started!')
+
+  return HttpResponseRedirect(contest_url)
+
+
+@require_POST
+@staff_member_required
+@transaction.commit_on_success
+@contest_decorator
+def stop_contest(request, contest):
+  contest_url = url_reverse('contest-admin', args=(contest.id,))
+  try:
+    contest.stop(request.user.id)
+    messages.info(request,
+        'Contest {} stopped'.format(contest.name))
+  except ContestNotStartedException:
+    messages.error(request, 'The contest is not running!')
+
+  return HttpResponseRedirect(contest_url)
+
+
+@require_POST
+@staff_member_required
+@transaction.commit_on_success
+@contest_decorator
+def pause_contest(request, contest):
+  contest_url = url_reverse('contest-admin', args=(contest.id,))
+  try:
+    contest.pause(request.user.id)
+    messages.info(request,
+        'Contest {} paused'.format(contest.name))
+  except ContestNotStartedException:
+    messages.error(request, 'The contest is not running!')
 
   return HttpResponseRedirect(contest_url)
 

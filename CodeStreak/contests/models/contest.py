@@ -102,43 +102,45 @@ class Contest(CachingMixin, models.Model):
         Score.create_entry(self.id, u.id, task_id)
 
   @transaction.commit_on_success
-  def start(self):
+  def start(self, admin_user_id=None):
     if self.state is Contest.UNASSIGNED:
       self.state = Contest.STARTED
       self.last_start_date = now()
       self.save()
       self._preset_scores()
-      LogEntry.start_contest(self.id)
+      LogEntry.start_contest(self.id, admin_user_id)
+    elif self.state is Contest.PAUSED:
+      self.resume(admin_user_id)
     else:
-      raise IntegrityError
+      raise ContestStartedException
 
   @transaction.commit_on_success
-  def stop(self):
+  def stop(self, admin_user_id=None):
     if self.state is Contest.STARTED or self.state is Contest.PAUSED:
       self.state = Contest.STOPPED
       self.save()
-      LogEntry.stop_contest(self.id)
+      LogEntry.stop_contest(self.id, admin_user_id)
     else:
-      raise IntegrityError
+      raise ContestNotStartedException
 
   @transaction.commit_on_success
-  def pause(self):
+  def pause(self, admin_user_id=None):
     if self.state is Contest.STARTED:
       self.state = Contest.PAUSED
       self.running_time = self.get_current_running_time()
       self.save()
-      LogEntry.pause_contest(self.id)
+      LogEntry.pause_contest(self.id, admin_user_id)
     else:
-      raise IntegrityError
+      raise ContestNotStartedException
 
   @transaction.commit_on_success
-  def resume(self):
+  def resume(self, admin_user_id=None):
     if self.state is Contest.PAUSED:
       self.state = Contest.STARTED
       self.save()
-      LogEntry.resume_contest(self.id)
+      LogEntry.resume_contest(self.id, admin_user_id)
     else:
-      raise IntegrityError
+      raise ContestStartedException
 
   def get_current_running_time(self):
     if self.state == Contest.UNASSIGNED:

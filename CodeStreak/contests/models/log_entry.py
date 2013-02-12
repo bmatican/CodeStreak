@@ -41,10 +41,11 @@ class LogEntry(CachingMixin, models.Model):
     return cls.objects.all()[start:end]
 
   @classmethod
-  def _make_contest_entry(cls, contest_id, type):
+  def _make_contest_entry(cls, contest_id, type, user_id):
     cls.objects.create(
       contest_id=contest_id,
       type=type,
+      user_id=user_id,
     ).save()
 
   @classmethod
@@ -57,20 +58,20 @@ class LogEntry(CachingMixin, models.Model):
     ).save()
 
   @classmethod
-  def start_contest(cls, contest_id):
-    cls._make_contest_entry(contest_id, cls.CONTEST_STARTED)
+  def start_contest(cls, contest_id, user_id):
+    cls._make_contest_entry(contest_id, cls.CONTEST_STARTED, user_id)
 
   @classmethod
-  def end_contest(cls, contest_id):
-    cls._make_contest_entry(contest_id, cls.CONTEST_ENDED)
+  def stop_contest(cls, contest_id, user_id):
+    cls._make_contest_entry(contest_id, cls.CONTEST_ENDED, user_id)
 
   @classmethod
-  def pause_contest(cls, contest_id):
-    cls._make_contest_entry(contest_id, cls.CONTEST_PAUSED)
+  def pause_contest(cls, contest_id, user_id):
+    cls._make_contest_entry(contest_id, cls.CONTEST_PAUSED, user_id)
 
   @classmethod
-  def resume_contest(cls, contest_id):
-    cls._make_contest_entry(contest_id, cls.CONTEST_RESUMED)
+  def resume_contest(cls, contest_id, user_id):
+    cls._make_contest_entry(contest_id, cls.CONTEST_RESUMED, user_id)
 
   @classmethod
   def solve_task(cls, contest_id, user_id, task_id):

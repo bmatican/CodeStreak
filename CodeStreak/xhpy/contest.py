@@ -73,12 +73,12 @@ class :cs:header-contest(:cs:header):
                     {content}
                 </cs:header-link>)
         if user.is_staff:
-          content = 'Activity Log'
-          link = url_reverse('contest-logs', args=(contest.id,))
+          content = 'Admin'
+          link = url_reverse('contest-admin', args=(contest.id,))
           prepended_children.appendChild(
               <cs:header-link
                   link={link}
-                  active={active_tab == 'contest-logs'}>
+                  active={active_tab == 'contest-admin'}>
                   {content}
               </cs:header-link>)
 
