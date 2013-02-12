@@ -51,7 +51,7 @@ def _contest_home_problems(request, contest):
     raise Http404
 
   default_task_id = -1
-  task_id_display = request.GET.get('task_id', default_task_id)
+  task_id_display = int(request.GET.get('task_id', default_task_id))
   if not handler.is_task_visible(task_id_display):
     task_id_display = default_task_id
 
@@ -75,6 +75,7 @@ def _contest_home_problems(request, contest):
 def _contest_home_users(request, contest):
   content = \
   <div class="contest-registration-list">
+    <h2>{'{} Registered Users'.format(contest.name)}</h2>
     <cs:contest-registration-list
       contest={contest} />
   </div>
@@ -88,6 +89,7 @@ def _contest_home_ranking(request, contest):
 
   content = \
   <div class="contest-rankings">
+    <h2>{'{} Rankings'.format(contest.name)}</h2>
     <cs:contest-rankings
       contest={contest}
       tasks={contest.assigned_tasks.all()}

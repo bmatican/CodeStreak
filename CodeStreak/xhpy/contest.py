@@ -21,7 +21,10 @@ class :cs:header-contest(:cs:header):
               str active_tab = 'contest-problems'
 
     def get_time_left(self):
-        return self.getAttribute('contest').get_time_left()
+        contest = self.getAttribute('contest')
+        if contest.state == Contest.STARTED:
+            return contest.get_time_left()
+        return None
 
     def get_prepended_children(self):
         contest = self.getAttribute('contest')
