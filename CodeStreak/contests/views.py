@@ -82,8 +82,8 @@ def _contest_home_problems_registered(request, contest, see_all=False):
       task_by_id={handler.task_by_id}
       task_id={task_id_display}
       score_by_task_id={handler.score_by_task_id} />
-    <script>
-      {'var contestId={};'.format(contest.id)}
+    <script type="text/javascript">
+        {'var contestId = {};'.format(contest.id)}
     </script>
   </div>
 
@@ -153,7 +153,7 @@ def _contest_home_ranking(request, contest):
   return _contest_home_general(request, contest, content, 'contest-ranking')
 
 
-def _contest_home_admin(request, contest):
+def _contest_home_admin(request, contest, last_log_entry=None):
   button = <x:frag />
   show_nothing = False
   if contest.state == Contest.UNASSIGNED:
@@ -191,13 +191,20 @@ def _contest_home_admin(request, contest):
   <div class="contest-activity-log">
     {button_form}
     <h2>{'{} Activity Log'.format(contest.name)}</h2>
+    <script type="text/javascript">
+        {'var contestId = {};'.format(contest.id)}
+    </script>
   </div>
 
-  try:
-    entries = LogEntry.get_all_entries(contest.id)
-  except:
-    raise Http404
+  entries = LogEntry.get_all_entries(contest.id, last_log_entry)
 
+  new_last_log_entry = 0
+  if entries:
+    new_last_log_entry = entries[0].id
+  content.appendChild(
+    <script type="text/javascript">
+        {'var lastLogEntry = {};'.format(new_last_log_entry)}
+    </script>)
   for entry in entries:
     content.appendChild(<cs:log-entry entry={entry} />)
 
@@ -246,9 +253,9 @@ def contest_ranking(request, contest):
 
 @staff_member_required
 @contest_decorator
-def contest_admin(request, contest):
+def contest_admin(request, contest, last_log_entry=None):
   if contest.can_user_view_logs(request.user):
-    return _contest_home_admin(request, contest)
+    return _contest_home_admin(request, contest, last_log_entry)
   else:
     raise Http404 #TODO: this should be useless, due to decorator
 
@@ -368,7 +375,7 @@ def ajax_decorator(f):
 @ajax_decorator
 @require_POST
 @contest_decorator
-def submit_task(request, contest, task_id, answer, **kwargs):
+def submit_task(request, contest, task_id, answer):
   if contest.can_user_submit(request.user.id, task_id):
     great_success = Task.check_output(task_id, answer)
 
@@ -385,7 +392,7 @@ def submit_task(request, contest, task_id, answer, **kwargs):
 @ajax_decorator
 @require_POST
 @contest_decorator
-def skip_task(request, contest, task_id, **kwargs):
+def skip_task(request, contest, task_id):
   if contest.can_user_submit(request.user.id, task_id):
     Score.skip_task(contest.id, request.user.id, task_id)
     return {'verdict': 'skipped'}
@@ -395,21 +402,25 @@ def skip_task(request, contest, task_id, **kwargs):
 
 @ajax_decorator
 @contest_decorator
-def get_contest_status(request, contest, **kwargs):
-  pass
+def get_contest_state(request, contest):
+  return {'verdict': 'ok', 'message': contest.state}
 
 
 @ajax_decorator
 @contest_decorator
 @staff_member_required
-def fetch_contest_logs(request, contest, **kwargs):
-  pass
+def fetch_contest_logs(request, contest, last_log_entry=None):
+  entries = LogEntry.get_all_entries(contest.id, last_log_entry)
+  content = <x:frag />
+  for entry in entries:
+    content.appendChild(<cs:log-entry entry={entry} />)
+  return {'verdict': 'ok', 'message': str(content)}
 
 
 data_providers = {
   'skipTask': skip_task,
   'submitTask': submit_task,
-  'getContestStatus': get_contest_status,
+  'getContestState': get_contest_state,
   'fetchContestLogs': fetch_contest_logs,
 }
 
@@ -417,11 +428,24 @@ data_providers = {
 @login_required
 def data_provider(request, action):
   if request.is_ajax():
-    payload = json.loads(request.POST.get('payload', '{}'))
-    response = None
+    try:
+      payload = json.loads(request.REQUEST.get('payload', '{}'))
+    except ValueError:
+      response = {'verdict': 'error', 'message': 'Invalid payload'}
+      return HttpResponse(json.dumps(response))
+
     if action in data_providers:
       data_provider = data_providers.get(action)
-      return data_provider(request, **payload)
+      try:
+        return data_provider(request, **payload)
+      except TypeError:
+        # Most likely missing or extra payload arguments
+        response = {
+          'verdict': 'error',
+          'message': 'Invalid payload or 500 internal error (TypeError)'
+        }
+        raise
+        return HttpResponse(json.dumps(response))
     else:
       response = {'verdict': 'error', 'message': 'Unrecognized action'}
       return HttpResponse(json.dumps(response))

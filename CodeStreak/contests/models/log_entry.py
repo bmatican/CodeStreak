@@ -31,14 +31,11 @@ class LogEntry(CachingMixin, models.Model):
   task = models.ForeignKey('Task', blank=True, null=True)
 
   @classmethod
-  def get_all_entries(cls, contest_id, offset=None, limit=None):
-    if offset == None:
-      offset = 0
-    if limit == None:
-      limit = 30
-    start = int(offset)
-    end = int(offset) + int(limit)
-    return cls.objects.filter(contest__id=contest_id)[start:end]
+  def get_all_entries(cls, contest_id, last_log_entry=None):
+    query = cls.objects.filter(contest__id=contest_id)
+    if last_log_entry:
+      query = query.filter(id__gt=last_log_entry)
+    return query.all()
 
   @classmethod
   def _make_contest_entry(cls, contest_id, type, user_id):
