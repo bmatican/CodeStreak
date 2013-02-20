@@ -19,11 +19,11 @@ from CodeStreak.contests.utils.tasks import *
 def contest_decorator(f):
   def wrap(request, contest_id, *args, **kwargs):
     try:
-      contest = Contest.get_contest(contest_id, *args, **kwargs)
+      contest = Contest.get_contest(contest_id)
     except Contest.DoesNotExist:
       raise Http404
 
-    return f(request, contest)
+    return f(request, contest, *args, **kwargs)
   return wrap
 
 
@@ -354,69 +354,76 @@ def logout_view(request):
   return HttpResponseRedirect(url_reverse('contest-list'))
 
 
-def submit_task(user, payload):
-  response = {'verdict': 'error'}
-  try:
-    task_id = payload.get('task_id')
-    contest_id = payload.get('contest_id')
-    answer = payload.get('answer')
-
-    contest = Contest.get_contest(contest_id)
-    if contest.can_user_submit(user.id, task_id):
-      great_success = Task.check_output(task_id, answer)
-
-      if great_success:
-        Score.solve_task(contest_id, user.id, task_id)
-        # add actual state.
-        response['verdict'] = 'success'
-      else:
-        Score.fail_task(contest_id, user.id, task_id)
-        response['verdict'] = 'wrong-answer'
+def ajax_decorator(f):
+  def wrap(*args, **kwargs):
+    response = f(*args, **kwargs)
+    if isinstance(response, HttpResponse):
       return response
+    if isinstance(response, dict):
+      response = json.dumps(response)
+    return HttpResponse(response)
+  return wrap
+
+
+@ajax_decorator
+@require_POST
+@contest_decorator
+def submit_task(request, contest, task_id, answer, **kwargs):
+  if contest.can_user_submit(request.user.id, task_id):
+    great_success = Task.check_output(task_id, answer)
+
+    if great_success:
+      Score.solve_task(contest.id, request.user.id, task_id)
+      return {'verdict': 'success'}
     else:
-      return response
-  except Contest.DoesNotExist:
-    return response
+      Score.fail_task(contest.id, request.user.id, task_id)
+    return {'verdict': 'wrong-answer'}
+  else:
+    return {'verdict': 'error'}
 
 
-def skip_task(user, payload):
-  response = {'verdict': 'error'}
-  try:
-    task_id = payload.get('task_id')
-    contest_id = payload.get('contest_id')
+@ajax_decorator
+@require_POST
+@contest_decorator
+def skip_task(request, contest, task_id, **kwargs):
+  if contest.can_user_submit(request.user.id, task_id):
+    Score.skip_task(contest.id, request.user.id, task_id)
+    return {'verdict': 'skipped'}
+  else:
+    return {'verdict': 'error'}
 
-    contest = Contest.get_contest(contest_id)
-    if contest.can_user_submit(user.id, task_id):
-      Score.skip_task(contest_id, user.id, task_id)
-      response['verdict'] = 'skipped'
-      return response
-    else:
-      return response
-  except Contest.DoesNotExist:
-    return response
+
+@ajax_decorator
+@contest_decorator
+def get_contest_status(request, contest, **kwargs):
+  pass
+
+
+@ajax_decorator
+@contest_decorator
+@staff_member_required
+def fetch_contest_logs(request, contest, **kwargs):
+  pass
 
 
 data_providers = {
-  'skipTask' : skip_task,
-  'submitTask' : submit_task,
+  'skipTask': skip_task,
+  'submitTask': submit_task,
+  'getContestStatus': get_contest_status,
+  'fetchContestLogs': fetch_contest_logs,
 }
 
 
-@require_POST
 @login_required
 def data_provider(request, action):
-  global data_providers
   if request.is_ajax():
-    payload = json.loads(request.POST.get('payload', ''))
+    payload = json.loads(request.POST.get('payload', '{}'))
     response = None
     if action in data_providers:
-      data_function = data_providers.get(action)
-      response = data_function(request.user, payload)
+      data_provider = data_providers.get(action)
+      return data_provider(request, **payload)
     else:
-      return {'verdict': 'error', 'message': 'Unrecognized action'}
-    if response == None:
-      raise Http404
-    else:
+      response = {'verdict': 'error', 'message': 'Unrecognized action'}
       return HttpResponse(json.dumps(response))
   else:
     raise Http404
