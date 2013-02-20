@@ -187,6 +187,16 @@ def _contest_home_admin(request, contest, last_log_entry=None):
       {button}
     </form>
 
+  entries = LogEntry.get_all_entries(contest.id, last_log_entry)
+
+  new_last_log_entry = 0
+  if entries:
+    new_last_log_entry = entries[0].id
+
+  content_entries = <div id="log-entries" />
+  for entry in entries:
+    content_entries.appendChild(<cs:log-entry entry={entry} />)
+
   content = \
   <div class="contest-activity-log">
     {button_form}
@@ -194,19 +204,11 @@ def _contest_home_admin(request, contest, last_log_entry=None):
     <script type="text/javascript">
         {'var contestId = {};'.format(contest.id)}
     </script>
-  </div>
-
-  entries = LogEntry.get_all_entries(contest.id, last_log_entry)
-
-  new_last_log_entry = 0
-  if entries:
-    new_last_log_entry = entries[0].id
-  content.appendChild(
     <script type="text/javascript">
         {'var lastLogEntry = {};'.format(new_last_log_entry)}
-    </script>)
-  for entry in entries:
-    content.appendChild(<cs:log-entry entry={entry} />)
+    </script>
+    {content_entries}
+  </div>
 
   return _contest_home_general(request, contest, content, 'contest-admin')
 
@@ -409,12 +411,15 @@ def get_contest_state(request, contest):
 @ajax_decorator
 @contest_decorator
 @staff_member_required
-def fetch_contest_logs(request, contest, last_log_entry=None):
+def fetch_contest_logs(request, contest, last_log_entry=0):
   entries = LogEntry.get_all_entries(contest.id, last_log_entry)
   content = <x:frag />
   for entry in entries:
     content.appendChild(<cs:log-entry entry={entry} />)
-  return {'verdict': 'ok', 'message': str(content)}
+  return {'verdict': 'ok', 'message': {
+    'entries': str(content),
+    'last_log_entry': entries[0].id if entries else last_log_entry
+  }}
 
 
 data_providers = {

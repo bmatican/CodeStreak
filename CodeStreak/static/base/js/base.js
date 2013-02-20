@@ -62,6 +62,24 @@ $(document).ready(function () {
     updateTimeLeft();
     intervalID = setInterval(updateTimeLeft, 1000);
   });
+
+  $('#log-entries').each(function () {
+    var fetchLogEntries = function () {
+      var data = {
+        'contest_id': contestId,
+        'last_log_entry': lastLogEntry
+      };
+      pullData('fetchContestLogs', data, 'get', function (response) {
+        if (response.verdict === 'ok') {
+          lastLogEntry = response.message.last_log_entry;
+          $('#log-entries').prepend(response.message.entries);
+        }
+      });
+    };
+
+    fetchLogEntries();
+    setInterval(fetchLogEntries, 2000);
+  });
 });
 
 var facebookDefaultScope = ["email", "user_about_me", "user_birthday", "user_website"];
@@ -119,7 +137,6 @@ function pullData(provider, payload, type, callback) {
     callback(JSON.parse(response));
   });
 }
-
 
 function taskCallback(feedback, task_no) {
   setTimeout(function () {
