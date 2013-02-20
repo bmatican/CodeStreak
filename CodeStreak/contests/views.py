@@ -48,9 +48,27 @@ def contest_list(request):
 
 
 def _contest_home_problems_unregistered(request, contest):
-  messages.error(request, 'Unimplemented yet...')
-  contest_url = url_reverse('contest-home', args=(contest.id,))
-  return HttpResponseRedirect(contest_url)
+  tasks = contest.assigned_tasks.all()
+
+  default_task_id = -1
+  task_id_display = int(request.GET.get('task_id', default_task_id))
+  if not task_id_display in [task.id for task in tasks]:
+    task_id_display = default_task_id
+
+  content = \
+  <div class="contest-problem-set">
+    <h2>{'{} Problem Set'.format(contest.name)}</h2>
+    <cs:contest-problem-set
+      contest={contest}
+      tasks={tasks}
+      active_task_id={task_id_display} 
+    />
+    <script>
+      {'var contestId={};'.format(contest.id)}
+    </script>
+  </div>
+
+  return _contest_home_general(request, contest, content, 'contest-problems')
 
 
 def _contest_home_problems_registered(request, contest, see_all=False):
@@ -62,11 +80,8 @@ def _contest_home_problems_registered(request, contest, see_all=False):
 
   if see_all == True:
     visible_tasks = contest.assigned_tasks.all()
-    visible_tasks = [(i, visible_tasks[i].id) \
-        for i in xrange(len(visible_tasks))]
   else:
     visible_tasks = handler.get_visible_tasks()
-
 
   default_task_id = -1
   task_id_display = int(request.GET.get('task_id', default_task_id))
@@ -78,12 +93,12 @@ def _contest_home_problems_registered(request, contest, see_all=False):
     <h2>{'{} Problem Set'.format(contest.name)}</h2>
     <cs:contest-problem-set
       contest={contest}
-      ordered_tasks={visible_tasks}
-      task_by_id={handler.task_by_id}
-      task_id={task_id_display}
-      score_by_task_id={handler.score_by_task_id} />
-    <script type="text/javascript">
-        {'var contestId = {};'.format(contest.id)}
+      tasks={visible_tasks}
+      scores={handler.score_by_task_id}
+      active_task_id={task_id_display}
+    />
+    <script>
+      {'var contestId={};'.format(contest.id)}
     </script>
   </div>
 
@@ -110,7 +125,7 @@ def _contest_home_problems(request, contest):
       perror('Contest has not started yet; problems are not available!')
   elif contest.state == Contest.STARTED:
     if is_registered:
-      return _contest_home_problems_registered(request, contest)
+      return _contest_home_problems_registered(request, contest, False)
     else:
       perror('Contest is underway and you have not registered; ' +
              'problems will be available at the end of the contest!')

@@ -7,13 +7,16 @@ class InvalidProblemOrderingException:
 
 
 class TaskVisibilityHandler:
-  def __init__(self, done_task_ids, indexed_task_ids):
+  def __init__(self, done_task_ids, ordered_task_ids):
     self.done_task_ids = done_task_ids
-    self.indexed_task_ids = indexed_task_ids
-    self.visible_tasks = []
+    self.ordered_task_ids = ordered_task_ids
+
     self.scores = []
     self.task_by_id = {}
     self.score_by_task_id = {}
+
+    self.visible_task_ids = []
+    self.visible_tasks = []
 
 
   @classmethod
@@ -27,7 +30,7 @@ class TaskVisibilityHandler:
 
     scores = Score.get_scores(contest_id, user_id)
     contest = Contest.get_contest(contest_id)
-    indexed_task_ids = contest.get_task_ordering()
+    ordered_task_ids = contest.get_task_ordering()
 
     done_task_ids = []
     task_by_id = {}
@@ -39,36 +42,47 @@ class TaskVisibilityHandler:
       if s.solved or s.skipped:
         done_task_ids.append(s.task.id)
 
-    instance = cls(done_task_ids, indexed_task_ids)
+    instance = cls(done_task_ids, ordered_task_ids)
     instance.scores = scores
     instance.task_by_id = task_by_id
     instance.score_by_task_id = score_by_task_id
+    instance.visible_task_ids = instance.get_visible_task_ids()
     instance.visible_tasks = instance.get_visible_tasks()
-
     return instance
 
-    
+  
   def get_visible_tasks(self):
     if self.visible_tasks != []:
       return self.visible_tasks
     else:
+      ids = self.get_visible_task_ids()
+      return [self.task_by_id[id] for id in ids]
+
+    
+  def get_visible_task_ids(self):
+    if self.visible_task_ids != []:
+      return self.visible_task_ids
+    else:
+      no_done_tasks = len(self.done_task_ids)
+      no_tasks = len(self.ordered_task_ids)
       # no try catch, let
       next = None
-      for ind, id in self.indexed_task_ids:
-        if ind >= len(self.done_task_ids):
-          next = (ind, id) # found it
+      for ind in xrange(no_tasks):
+        id = self.ordered_task_ids[ind]
+        if ind >= no_done_tasks:
+          next = id # found it
           break
         if self.done_task_ids[ind] != id:
           raise InvalidProblemOrderingException  # invalid order
       if next == None:
-        return self.indexed_task_ids
+        return self.ordered_task_ids
       else:
-        return self.indexed_task_ids[:len(self.done_task_ids) + 1]
+        return self.ordered_task_ids[:(no_done_tasks + 1)]
 
 
   def is_task_visible(self, task_id):
     visible = self.get_visible_tasks()
-    return task_id in [id for _, id in visible]
+    return task_id in visible
 
 
   def is_task_solvable(self, task_id):
@@ -78,7 +92,6 @@ class TaskVisibilityHandler:
 
     if self.is_task_visible(task_id):
       score = self.score_by_task_id.get(task_id)
-      if score == None or not score.solved:
-        # either last one, or just skipped and not solved
+      if not score.solved:
         return True
     return False

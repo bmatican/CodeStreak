@@ -1,7 +1,7 @@
 -- Fix timer on unregistered
 -- edit contest work in admin
 
--- Create :cs:problem-set-for-no-score (if not registered)
+DONE: Create :cs:problem-set-for-no-score (if not registered)
 
 -- Ajax for contest status (refresh page on state change)
 -- Ajax for log entries

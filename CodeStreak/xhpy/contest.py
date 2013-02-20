@@ -135,133 +135,139 @@ class :cs:contest-list(:x:element):
 
 class :cs:task-show(:x:element):
     attribute object task @required,
-              object score @required
+              object score
     children empty
 
     def render(self):
       task = self.getAttribute('task')
       score = self.getAttribute('score')
-      contest = score.contest
-      participation = Participation.get_entry(score.contest_id, score.user_id)
-
-      if task.input:
-        input_xhp = \
-        <p class="input">
-          <strong>Input</strong><br />
-          <code>{task.input}</code>
-        </p>
+      if score == None:
+        return self.display_task(task)
       else:
-        input_xhp = <x:frag />
+        contest = score.contest
+        participation = Participation.get_entry(score.contest_id, score.user_id)
 
-      output_xhp = <x:frag />
-      submit_button = <x:frag />
-      if score.solved:
-        output_xhp = \
-        <p class="solved-output">
-          <strong>Output</strong><br />
-          <code>{task.output}</code>
-        </p>
-      elif not contest.is_stopped():
-        submit_button = \
-        <ul class="inline">
-          <li>
-            <div class="input-append">
-              <input class="span2" id={"taskanswer"+str(task.id)}
-                type="text" placeholder="Type answer..." />
-              <button class="btn btn-primary" type="button"
-                id={"answerbutton" + str(task.id)}
-                onclick={"submitTask(" +str(task.id) + ")"}
-                data-loading-text="Loading...">
-                Submit!
-              </button>
-            </div>
-          </li>
-          <li id={"taskresponse"+str(task.id)}></li>
-        </ul>
+        output_xhp = <x:frag />
+        submit_button = <x:frag />
+        if score.solved:
+          output_xhp = \
+          <p class="solved-output">
+            <strong>Output</strong><br />
+            <code>{task.output}</code>
+          </p>
+        elif not contest.is_stopped():
+          submit_button = \
+          <ul class="inline">
+            <li>
+              <div class="input-append">
+                <input class="span2" id={"taskanswer"+str(task.id)}
+                  type="text" placeholder="Type answer..." />
+                <button class="btn btn-primary" type="button"
+                  id={"answerbutton" + str(task.id)}
+                  onclick={"submitTask(" +str(task.id) + ")"}
+                  data-loading-text="Loading...">
+                  Submit!
+                </button>
+              </div>
+            </li>
+            <li id={"taskresponse"+str(task.id)}></li>
+          </ul>
 
-      skip_button = <x:frag />
-      if not contest.is_stopped() and score.can_skip() \
-          and participation.skips_left > 0:
-        skip_button = \
+        skip_button = <x:frag />
+        if not contest.is_stopped() and score.can_skip() \
+            and participation.skips_left > 0:
+          skip_button = \
+          <div>
+            <button class="btn btn-danger"
+              onclick={"skipTask(" + str(task.id) + ")"}>
+              Skip task
+            </button>
+            <span class="help-inline">You can only do it once per contest!</span>
+          </div>
+
+        page = \
+        <x:frag>
+            {output_xhp}
+            {submit_button}
+            {skip_button}
+        </x:frag>
+
+        return self.display_task(task, page)
+
+    def display_task(self, task, content=<x:frag />):
+        if task.input:
+            input_xhp = \
+            <p class="input">
+                <strong>Input</strong><br />
+                <code>{task.input}</code>
+            </p>
+        else:
+            input_xhp = <x:frag />
+
+        page = \
         <div>
-          <button class="btn btn-danger"
-            onclick={"skipTask(" + str(task.id) + ")"}>
-            Skip task
-          </button>
-          <span class="help-inline">You can only do it once per contest!</span>
+            <p><small>{"Difficulty: " + task.get_difficulty_display()}</small></p>
+            <strong>Problem</strong>
+            <p>{task.text}</p>
+            {input_xhp}
+            {content}
         </div>
-
-      page = \
-      <div>
-        <p><small>{"Difficulty: " + task.get_difficulty_display()}</small></p>
-        <strong>Problem</strong>
-        <p>{task.text}</p>
-        {input_xhp}
-        {output_xhp}
-        {submit_button}
-        {skip_button}
-      </div>
-      return page
+        return page
 
 
 class :cs:contest-problem-set(:x:element):
     attribute object contest @required,
-              list ordered_tasks @required,
-              dict task_by_id @required,
-              dict score_by_task_id @required,
-              int task_id
+              list tasks @required,
+              dict scores,
+              int active_task_id
     children empty
 
     def render(self):
-        #TODO: ordered_tasks is actually visible tasks!
         task_content = <div class="tab-content" />
         task_nav = <ul class="nav nav-tabs" />
-        display_task_id = self.getAttribute('task_id')
+        display_task_id = self.getAttribute('active_task_id')
         response = \
         <div class="tabbable tabs-left">
           {task_nav}
           {task_content}
         </div>
 
-        ordered_tasks = self.getAttribute('ordered_tasks')
-        task_by_id = self.getAttribute('task_by_id')
-        score_by_task_id = self.getAttribute('score_by_task_id')
-        if display_task_id == -1 and len(ordered_tasks) > 0:
-              _, display_task_id = ordered_tasks[-1] # focus on the last one...
-        for cnt, task_id in ordered_tasks:
-            task = task_by_id[task_id]
-            score = score_by_task_id.get(task_id)
+        tasks = self.getAttribute('tasks')
+        score_by_task_id = self.getAttribute('scores')
+        if score_by_task_id == None:
+          score_by_task_id = {}
+        if display_task_id == -1 and len(tasks) > 0:
+            display_task_id = tasks[-1].id # focus on the last one...
+        for task in tasks:
+            score = score_by_task_id.get(task.id)
 
             badge = <span class="label label-info">Untackled</span>
-            score_str = '-'
-            if score.solved:
-                badge = <span class="label label-success">Solved</span>
-            elif score.skipped:
-                badge = <span class="label label-warning">Skipped</span>
-            elif score.tries != 0:
-                # Wrong answer on previous attempts
-                badge = \
-                <span class="label label-important">
-                    Wrong answer
-                </span>
+            if score != None:
+              if score.solved:
+                  badge = <span class="label label-success">Solved</span>
+              elif score.skipped:
+                  badge = <span class="label label-warning">Skipped</span>
+              elif score.tries != 0:
+                  # Wrong answer on previous attempts
+                  badge = \
+                  <span class="label label-important">
+                      Wrong answer
+                  </span>
 
-            score_str = '{} ({})'.format(
-                    score.score, score.format_tries())
-
-            short_name = task.name
+            display_name = task.name
             if len(task.name) > 20:
-              task.name=task.name[0:18] + '...'
+              display_name=task.name[0:18] + '...'
 
             task_nav.appendChild(
-                <li class={'active' if task_id==display_task_id else ''}>
-                  <a data-toggle="tab" href={"#task_tab" + str(cnt+1)}>
+                <li class={'active' if task.id==display_task_id else ''}>
+                  <a data-toggle="tab" href={"#task_tab" + str(task.id)}>
                     {badge} {' '}
-                    {task.name}
+                    {display_name}
                   </a>
                 </li>)
             task_content.appendChild(
-                <div id={"task_tab" + str(cnt+1)}
-                     class={"tab-pane active" if task_id==display_task_id else "tab-pane" }>
+                <div id={"task_tab" + str(task.id)}
+                     class={"tab-pane active" if task.id==display_task_id else "tab-pane" }>
                     <cs:task-show task={task} score={score} />
                 </div>)
 

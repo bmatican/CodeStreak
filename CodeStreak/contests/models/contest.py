@@ -65,8 +65,8 @@ class Contest(CachingMixin, models.Model):
     return cls.objects.get(id=contest_id)
 
   def get_task_ordering(self):
-    return list(enumerate([el['id'] for el in \
-        self.assigned_tasks.values('id')]))
+    return list([el['id'] for el in \
+        self.assigned_tasks.values('id')])
 
   def register_user(self, user_id):
     if self.state == Contest.UNASSIGNED:
