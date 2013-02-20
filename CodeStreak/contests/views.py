@@ -1,30 +1,17 @@
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse as url_reverse
 from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
-from django.views.decorators.http import require_POST
 from django.utils.timezone import now
 
 import json
 
 from CodeStreak.xhpy import *
+from CodeStreak.contests.decorators import *
 from CodeStreak.contests.models import *
 from CodeStreak.contests.utils.tasks import *
-
-
-def contest_decorator(f):
-  def wrap(request, contest_id, *args, **kwargs):
-    try:
-      contest = Contest.get_contest(contest_id)
-    except Contest.DoesNotExist:
-      raise Http404
-
-    return f(request, contest, *args, **kwargs)
-  return wrap
 
 
 def contest_list(request):
@@ -61,7 +48,7 @@ def _contest_home_problems_unregistered(request, contest):
     <cs:contest-problem-set
       contest={contest}
       tasks={tasks}
-      active_task_id={task_id_display} 
+      active_task_id={task_id_display}
     />
     <script>
       {'var contestId={};'.format(contest.id)}
@@ -376,17 +363,6 @@ def logout_view(request):
     logout(request)
   messages.info(request, 'You are now logged out.')
   return HttpResponseRedirect(url_reverse('contest-list'))
-
-
-def ajax_decorator(f):
-  def wrap(*args, **kwargs):
-    response = f(*args, **kwargs)
-    if isinstance(response, HttpResponse):
-      return response
-    if isinstance(response, dict):
-      response = json.dumps(response)
-    return HttpResponse(response)
-  return wrap
 
 
 @ajax_decorator
