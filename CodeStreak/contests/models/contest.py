@@ -1,5 +1,6 @@
 from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse as url_reverse
 from django.utils.timezone import now
 
 from caching.base import CachingMixin, CachingManager
@@ -187,6 +188,10 @@ class Contest(CachingMixin, models.Model):
 
   def __unicode__(self):
     return u'Contest "{0}"'.format(self.name)
+
+  def get_absolute_url(self):
+    return url_reverse('contest-admin', args=(str(self.id),))
+
 
   class Meta:
     app_label = 'contests'

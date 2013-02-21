@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.sites.models import Site
 
 from CodeStreak.contests.models import Contest, Task, Score, Participation, \
     LogEntry
