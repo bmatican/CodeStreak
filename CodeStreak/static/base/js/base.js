@@ -139,7 +139,10 @@ var F = new facebookClass(facebookAppId);
 F.load();
 
 function showAlert(message) {
-  $('#alerts').append('<div class="alert alert-info"><button data-dismiss="alert" type="button" class="close">x</button>' + message + '</div>');
+  $('#alerts').append(
+    $('<div class="alert alert-info">')
+      .append('<button data-dismiss="alert" type="button" class="close">x</button>')
+      .append(message));
 }
 
 function csrfSafeMethod(method) {
@@ -186,76 +189,80 @@ function pullData(provider, payload, type, callback) {
   });
 }
 
-function taskCallback(feedback, task_no) {
-  setTimeout(function () {
-    var button = $('#answerbutton' + task_no),
-      response = $('#taskresponse' + task_no),
-      response_message,
-      message,
-      message_style,
-      doReload;
-
-    button.button('reset');
-    if (feedback.verdict === 'success') {
+$(document).ready(function () {
+  var showResponse = function (response, element, button) {
+    var message, message_style, doReload;
+    if (response.verdict === 'success') {
       message = "Answer accepted. Well done! Loading next exercise...";
       message_style = "text-success";
       doReload = true;
-    } else if (feedback.verdict === 'wrong-answer') {
+    } else if (response.verdict === 'wrong-answer') {
       message = "Wrong Answer";
       message_style = "text-error";
       doReload = true;
-    } else if (feedback.verdict === 'skipped') {
+    } else if (response.verdict === 'skipped') {
       message = "Task skipped. Loading next exercise...";
       message_style = "text-warning";
       doReload = true;
-    } else if (feedback.verdict === 'error') {
+    } else if (response.verdict === 'error') {
       message = "Server error...";
       message_style = "text-error";
       doReload = false;
     }
 
-    response.append('<p id="responsemessage' + task_no +
-                    '" class="' + message_style + '" style="display:none">' +
-                    message + '</p>');
-    response_message = $('#responsemessage' + task_no);
-    response_message.fadeIn('slow', function () {
+    button.button('reset');
+    element.html(
+      $('<p></p>')
+        .attr('class', message_style)
+        .append(message));
+    element.hide();
+    element.fadeIn('normal', function () {
       setTimeout(function () {
-        response_message.fadeOut('slow', null);
-        if (doReload) {
-          document.location.reload(true);
-        }
+        element.fadeOut('normal', null);
       }, 3000);
     });
-  }, 500);
-}
-
-function submitTask(task_no) {
-  var answer = $('#taskanswer' + task_no).val(),
-    response = $('#taskresponse' + task_no),
-    button = $('#answerbutton' + task_no),
-    data = {
-      'task_id': task_no,
-      'answer': answer,
-      'contest_id': contestId
-    };
-
-  response.empty();
-  if (answer === '') {
-    showAlert("Answer must not be empty");
-    return;
-  }
-  button.button('loading');
-  pullData('submitTask', data, 'post', function (feedback) {
-    taskCallback(feedback, task_no);
-  });
-}
-
-function skipTask(task_id) {
-  var data = {
-    'task_id' : task_id,
-    'contest_id' : contestId
+    if (doReload) {
+      setTimeout(function () {
+        document.location.reload(true);
+      }, 1000);
+    }
   };
-  pullData('skipTask', data, 'post', function (feedback) {
-    taskCallback(feedback, task_id);
+
+  $('.submit-form').submit(function (e) {
+    var task_id = parseInt($(this).attr('data-task-id')),
+      answer = $(this).find('.answer').val(),
+      response = $(this).siblings('.task-response'),
+      button = $(this).find('.submit-button'),
+      data = {
+        'task_id': task_id,
+        'answer': answer,
+        'contest_id': contestId
+      };
+
+    response.empty();
+    if (answer === '') {
+      showAlert("Answer must not be empty");
+      return false;
+    }
+    button.button('loading');
+    pullData('submitTask', data, 'post', function (feedback) {
+      showResponse(feedback, response, button);
+    });
+
+    return false;
   });
-}
+
+  $('.skip-button button').click(function (e) {
+    var response = $(this).parent().siblings('.task-response'),
+      data = {
+        'task_id': parseInt($(this).parent().attr('data-task-id')),
+        'contest_id': contestId
+      };
+
+    $(this).button('loading');
+    pullData('skipTask', data, 'post', function (feedback) {
+      showResponse(feedback, response, $(this));
+    });
+    return false;
+  });
+});

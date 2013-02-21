@@ -157,29 +157,21 @@ class :cs:task-show(:x:element):
           </p>
         elif not contest.is_stopped():
           submit_button = \
-          <ul class="inline">
-            <li>
-              <div class="input-append">
-                <input class="span2" id={"taskanswer"+str(task.id)}
-                  type="text" placeholder="Type answer..." />
-                <button class="btn btn-primary" type="button"
-                  id={"answerbutton" + str(task.id)}
-                  onclick={"submitTask(" +str(task.id) + ")"}
-                  data-loading-text="Loading...">
-                  Submit!
-                </button>
-              </div>
-            </li>
-            <li id={"taskresponse"+str(task.id)}></li>
-          </ul>
+          <form class="submit-form input-append" data-task-id={task.id}>
+            <input class="span2 answer"
+              type="text" placeholder="Type answer..." />
+            <button class="btn btn-primary submit-button" type="submit"
+              data-loading-text="Loading...">
+              Submit!
+            </button>
+          </form>
 
         skip_button = <x:frag />
         if not contest.is_stopped() and score.can_skip() \
             and participation.skips_left > 0:
           skip_button = \
-          <div>
-            <button class="btn btn-danger"
-              onclick={"skipTask(" + str(task.id) + ")"}>
+          <div class="skip-button" data-task-id={task.id}>
+            <button class="btn btn-danger">
               Skip task
             </button>
             <span class="help-inline">You can only do it once per contest!</span>
@@ -188,6 +180,7 @@ class :cs:task-show(:x:element):
         page = \
         <x:frag>
             {output_xhp}
+            <div class="task-response" />
             {submit_button}
             {skip_button}
         </x:frag>
@@ -266,19 +259,19 @@ class :cs:contest-problem-set(:x:element):
             if score != None:
                 if score.solved:
                     badge = \
-                    <cs:badge 
+                    <cs:badge
                         style={"success"} content={"Solved"} badge={False}
                     />
                 elif score.skipped:
                     badge = \
-                    <cs:badge 
+                    <cs:badge
                         style={"warning"} content={"Skipped"} badge={False}
                     />
                 elif score.tries != 0:
                     # Wrong answer on previous attempts
                     badge = \
                     <cs:badge
-                        style={"important"} content={"Wrong answer"} badge={False} 
+                        style={"important"} content={"Wrong answer"} badge={False}
                     />
 
             display_name = task.name
@@ -352,7 +345,7 @@ class :cs:contest-rankings(:x:element):
                     task_score = None
 
                 if task_score.solved:
-                    content = '{} ({})'.format(task_score.score, 
+                    content = '{} ({})'.format(task_score.score,
                         task_score.format_tries())
                     xhp = <cs:badge style={"success"} content={content} />
                 elif task_score.skipped:

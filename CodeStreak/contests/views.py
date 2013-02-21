@@ -206,7 +206,7 @@ def _contest_home_admin(request, contest, last_log_entry=None):
       {'{} Activity Log'.format(contest.name)}
     </h2>
     <cs:hidden name={"contest"} value = {str(contest.id)} />
-    <cs:hidden name={"lasgLogEntry"} value = {str(new_last_log_entry)} />
+    <cs:hidden name={"lastLogEntry"} value = {str(new_last_log_entry)} />
     {content_entries}
   </div>
 
@@ -438,7 +438,6 @@ def data_provider(request, action):
           'verdict': 'error',
           'message': 'Invalid payload or 500 internal error (TypeError)'
         }
-        raise
         return HttpResponse(json.dumps(response))
     else:
       response = {'verdict': 'error', 'message': 'Unrecognized action'}

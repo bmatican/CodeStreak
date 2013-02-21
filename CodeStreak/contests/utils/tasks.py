@@ -81,7 +81,7 @@ class TaskVisibilityHandler:
 
 
   def is_task_visible(self, task_id):
-    visible = self.get_visible_tasks()
+    visible = self.get_visible_task_ids()
     return task_id in visible
 
 
@@ -89,7 +89,6 @@ class TaskVisibilityHandler:
     '''
     Can only be called properly if scores are loaded!
     '''
-
     if self.is_task_visible(task_id):
       score = self.score_by_task_id.get(task_id)
       if not score.solved:
