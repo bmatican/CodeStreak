@@ -1,11 +1,13 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+
 from django.views.decorators.http import require_POST
 
 import json
 
 from CodeStreak.contests.models import Contest
+
 
 
 def contest_decorator(f):
@@ -19,7 +21,6 @@ def contest_decorator(f):
       contest = Contest.get_contest(contest_id)
     except Contest.DoesNotExist:
       raise Http404
-
     return f(request, contest, *args, **kwargs)
   return wrap
 

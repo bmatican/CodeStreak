@@ -50,6 +50,18 @@ class :cs:header-contest(:cs:header):
             Rankings
         </cs:header-link>
 
+        contest_state_frag = <x:frag />
+        if contest.state == Contest.PAUSED:
+          contest_state_frag = \
+          <span id="contest-state-frag" style="padding-left:5px">
+            (<strong>paused</strong>)
+          </span>
+        elif contest.state == Contest.STOPPED:
+          contest_state_frag = \
+          <span id="contest-state-frag" style="padding-left:5px">
+            (<strong>stopped</strong>)
+          </span>
+
         prepended_children = \
         <x:frag>
             <cs:header-link
@@ -61,6 +73,7 @@ class :cs:header-contest(:cs:header):
                 link={url_reverse('contest-home', args=(contest.id,))}
                 active={active_tab == 'contest-home'}>
                 {contest.name}
+                {contest_state_frag}
             </cs:header-link>
             {header_problems}
             {header_ranking}

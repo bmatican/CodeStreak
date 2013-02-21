@@ -58,6 +58,7 @@ class :cs:page(:x:element):
             <div id="fb-root" />
             <cs:hidden name={"facebookApp"} value={str(settings.FACEBOOK_APP_ID)} />
             <cs:hidden name={"staticUrl"} value={str(settings.STATIC_URL)} />
+            <cs:aux />
         </body>
 
         # Add CSS files to header
@@ -79,6 +80,29 @@ class :cs:page(:x:element):
             </html>
         </x:doctype>
 
+class :cs:aux(:x:element):
+  children empty
+
+  def render(self):
+    return \
+    <x:frag>
+      <div id="modal-dialog" class="modal hide fade" tabindex="-1" role="dialog"
+        aria-labelledby="modal-dialog-label" aria-hidden="true">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"
+            aria-hidden="true">x</button>
+          <h3 id="modal-dialog-label">Contest has started</h3>
+        </div>
+        <div id="modal-dialog-body" class="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button class="btn" data-dismiss="modal"
+            aria-hidden="true">Close</button>
+          <button id="modal-dialog-ok-button" class="btn btn-primary">OK</button>
+        </div>
+
+      </div>
+    </x:frag>
 
 class :cs:header(:x:element):
     attribute float time_left,

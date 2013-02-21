@@ -146,6 +146,7 @@ def _contest_home_ranking(request, contest):
       contest={contest}
       tasks={tasks}
       rankings={rankings} />
+    <cs:hidden name={"contest"} value = {str(contest.id)} />
   </div>
 
   return _contest_home_general(request, contest, content, 'contest-ranking')

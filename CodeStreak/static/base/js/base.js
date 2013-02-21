@@ -111,6 +111,41 @@ $(document).ready(function () {
     intervalID = setInterval(updateTimeLeft, 1000);
   });
 
+  var oldContestState = undefined;
+
+  var checkContestState = function() {
+    if (!contestId) return;
+    var data = {
+                 'contest_id' : contestId,
+               }
+    pullData('getContestState', data, 'get', function(response) {
+      if (response.verdict === 'ok') {
+        if (oldContestState === undefined) {
+          oldContestState = response.message;
+        } else if (oldContestState != response.message) {
+          if (response.message === 1) {  // STARTED
+            modalHeader = $('<p></p>');
+            modalHeader.html('Contest has started!');
+            modalBody = $('<p></p>');
+            modalBody.html('Do you want to be redirected to problem set?');
+            showModal(modalHeader, modalBody, function() {
+              window.location = '/contest/' + contestId;
+            });
+          } else if (response.message === 2 || response.message === 3) {
+            // PAUSED or STOPPED
+            // refresh immediately
+            window.location = '/contest/' + contestId;
+          }
+          oldContestState = response.message;
+        }
+      } else {
+        console.log('Catastrophic failure! Failed to get contest state!')
+      }
+    })
+  };
+
+  setInterval(checkContestState, 2000);
+
   $('#log-entries').each(function () {
     var fetchLogEntries = function () {
       var data = {
@@ -266,3 +301,31 @@ $(document).ready(function () {
     return false;
   });
 });
+
+$.fn.animateHighlight = function(duration) {
+    var animateMs = duration || 400;
+    var self = this;
+    self.stop().fadeOut(animateMs/2, function() {
+      self.fadeIn(animateMs/2);
+    });
+};
+
+
+function showModal(modalHeader, modalBody, callback) {
+  var body = $('#modal-dialog-body');
+  body.empty();
+  body.append(modalBody);
+  var header = $('#modal-dialog-header');
+  header.empty();
+  header.append(modalHeader);
+  $('#modal-dialog').modal({
+    keyboard: true
+  })
+  $('#modal-dialog-ok-button').off('click');
+  $('#modal-dialog-ok-button').click(
+    function() {
+      callback();
+      $('#modal-dialog').modal('hide');
+    });
+  $('#modal-dialog').modal('show');
+}
