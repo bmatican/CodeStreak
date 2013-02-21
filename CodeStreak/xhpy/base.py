@@ -56,11 +56,8 @@ class :cs:page(:x:element):
                 {footer}
             </div>
             <div id="fb-root" />
-            <script type="text/javascript">{ """
-                var facebookAppId = '{}';
-                var staticUrl = '{}';
-            """.format(settings.FACEBOOK_APP_ID, settings.STATIC_URL)
-            }</script>
+            <cs:hidden name={"facebookApp"} value={str(settings.FACEBOOK_APP_ID)} />
+            <cs:hidden name={"staticUrl"} value={str(settings.STATIC_URL)} />
         </body>
 
         # Add CSS files to header
@@ -269,3 +266,16 @@ class :cs:csrf(:x:element):
         csrf_token = csrf(self.getAttribute('request'))['csrf_token']
         return \
         <input type="hidden" name="csrfmiddlewaretoken" value={csrf_token} />
+
+
+class :cs:hidden(:x:element):
+    attribute str name @required,
+              str value @required
+    children empty
+
+    def render(self):
+      name = self.getAttribute("name")
+      value = self.getAttribute("value")
+      id = name + "Id"
+      obj = <input id={id} type="hidden" name={id} value={value} />
+      return obj

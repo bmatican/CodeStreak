@@ -50,9 +50,7 @@ def _contest_home_problems_unregistered(request, contest):
       tasks={tasks}
       active_task_id={task_id_display}
     />
-    <script>
-      {'var contestId={};'.format(contest.id)}
-    </script>
+    <cs:hidden name={"contest"} value={str(contest.id)} />
   </div>
 
   return _contest_home_general(request, contest, content, 'contest-problems')
@@ -84,9 +82,7 @@ def _contest_home_problems_registered(request, contest, see_all=False):
       scores={handler.score_by_task_id}
       active_task_id={task_id_display}
     />
-    <script>
-      {'var contestId={};'.format(contest.id)}
-    </script>
+    <cs:hidden name={"contest"} value={str(contest.id)} />
   </div>
 
   return _contest_home_general(request, contest, content, 'contest-problems')
@@ -209,12 +205,8 @@ def _contest_home_admin(request, contest, last_log_entry=None):
     <h2>
       {'{} Activity Log'.format(contest.name)}
     </h2>
-    <script type="text/javascript">
-      {'var contestId = {};'.format(contest.id)}
-    </script>
-    <script type="text/javascript">
-      {'var lastLogEntry = {};'.format(new_last_log_entry)}
-    </script>
+    <cs:hidden name={"contest"} value = {str(contest.id)} />
+    <cs:hidden name={"lasgLogEntry"} value = {str(new_last_log_entry)} />
     {content_entries}
   </div>
 

@@ -1,3 +1,7 @@
+function endsWith(str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function getCookie(name) {
   var cookieValue = null, cookies, cookie, i;
   if (document.cookie && document.cookie !== '') {
@@ -14,6 +18,36 @@ function getCookie(name) {
   return cookieValue;
 }
 var csrfToken = getCookie('csrftoken');
+var contestId;
+var lastLogEntry;
+var facebookAppId;
+var staticUrl;
+
+function setGlobal(name, notInt) {
+  if (notInt !== true) {
+    notInt = false;
+  };
+  var ending = "Id";
+  var id = name;
+  if (!endsWith(id, ending)) {
+    id += ending;
+  };
+  $('#' + id).each(function () {
+    var val = $(this).attr('value');
+    if (notInt === false) {
+      window[name] = parseInt(val);
+    } else {
+      window[name] = val;
+    }
+  });
+}
+
+function initGlobals() {
+  setGlobal("contestId");
+  setGlobal("lastLogEntry");
+  setGlobal("facebookAppId");
+  setGlobal("staticUrl", true);
+}
 
 function followPostLink(action) {
   $('<form></form>')
@@ -25,6 +59,8 @@ function followPostLink(action) {
 }
 
 $(document).ready(function () {
+  initGlobals();
+
   $('#facebook-button').button();
   $('#facebook-button').click(function () {
     $(this).button('loading');
