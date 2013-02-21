@@ -106,7 +106,7 @@ class Contest(CachingMixin, models.Model):
   def _preset_scores(self):
     order = self.get_task_ordering()
     for u in self.registered_users.all():
-      for _, task_id in order:
+      for task_id in order:
         Score.create_entry(self.id, u.id, task_id)
 
   @transaction.commit_on_success

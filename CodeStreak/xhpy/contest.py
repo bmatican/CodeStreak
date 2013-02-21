@@ -215,6 +215,24 @@ class :cs:task-show(:x:element):
         return page
 
 
+class :cs:badge(:x:element):
+  attribute str content @required,
+            str style = "",
+            bool badge = True
+  children empty
+
+  def render(self):
+      style = self.getAttribute("style")
+      content = self.getAttribute("content")
+      badge = self.getAttribute("badge")
+
+      cls = "badge" if badge else "label"
+      if style != "":
+        cls = "{0} {0}-{1}".format(cls, style)
+      badge = <span class={cls}>{content}</span>
+      return badge
+
+
 class :cs:contest-problem-set(:x:element):
     attribute object contest @required,
               list tasks @required,
@@ -235,24 +253,33 @@ class :cs:contest-problem-set(:x:element):
         tasks = self.getAttribute('tasks')
         score_by_task_id = self.getAttribute('scores')
         if score_by_task_id == None:
-          score_by_task_id = {}
+            score_by_task_id = {}
         if display_task_id == -1 and len(tasks) > 0:
             display_task_id = tasks[-1].id # focus on the last one...
         for task in tasks:
             score = score_by_task_id.get(task.id)
 
-            badge = <span class="label label-info">Untackled</span>
+            badge = \
+            <cs:badge
+                style={"info"} content={"Untackled"} badge={False}
+            />
             if score != None:
-              if score.solved:
-                  badge = <span class="label label-success">Solved</span>
-              elif score.skipped:
-                  badge = <span class="label label-warning">Skipped</span>
-              elif score.tries != 0:
-                  # Wrong answer on previous attempts
-                  badge = \
-                  <span class="label label-important">
-                      Wrong answer
-                  </span>
+                if score.solved:
+                    badge = \
+                    <cs:badge 
+                        style={"success"} content={"Solved"} badge={False}
+                    />
+                elif score.skipped:
+                    badge = \
+                    <cs:badge 
+                        style={"warning"} content={"Skipped"} badge={False}
+                    />
+                elif score.tries != 0:
+                    # Wrong answer on previous attempts
+                    badge = \
+                    <cs:badge
+                        style={"important"} content={"Wrong answer"} badge={False} 
+                    />
 
             display_name = task.name
             if len(task.name) > 20:
@@ -325,25 +352,17 @@ class :cs:contest-rankings(:x:element):
                     task_score = None
 
                 if task_score.solved:
-                    xhp = \
-                    <x:frag>
-                        <span class="badge badge-success">
-                            {'{} ({})'.format(task_score.score,
-                                task_score.format_tries())}
-                        </span>
-                    </x:frag>
+                    content = '{} ({})'.format(task_score.score, 
+                        task_score.format_tries())
+                    xhp = <cs:badge style={"success"} content={content} />
                 elif task_score.skipped:
-                    xhp = \
-                    <span class="badge badge-warning">
-                        SK
-                    </span>
+                    xhp = <cs:badge style={"warning"} content={"SK"} />
                 elif task_score.tries != 0:
+                    content = "WA ({})".format(task_score.format_tries())
                     xhp = \
-                    <span class="badge badge-important">
-                        WA ({task_score.format_tries()})
-                    </span>
+                    <cs:badge style={"important"} content={content} />
                 else:
-                    xhp = <span class="badge">-</span>
+                    xhp = <cs:badge content={"-"} />
                 task_scores.appendChild(<td class="task-score">{xhp}</td>)
             tbody.appendChild(
                 <tr>
