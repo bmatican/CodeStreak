@@ -15,6 +15,15 @@ function getCookie(name) {
 }
 var csrfToken = getCookie('csrftoken');
 
+function followPostLink(action) {
+  $('<form></form>')
+    .attr('method', 'post')
+    .attr('action', action)
+    .append($('<input type="hidden" name="csrfmiddlewaretoken" />')
+      .attr('value', csrfToken))
+    .submit();
+}
+
 $(document).ready(function () {
   $('#facebook-button').button();
   $('#facebook-button').click(function () {
@@ -24,13 +33,16 @@ $(document).ready(function () {
   $('.alert').alert();
   $('.collapse').collapse();
 
-  $('.post-link').click(function (e) {
-    $('<form></form>')
-      .attr('method', 'post')
-      .attr('action', $(this).attr('href'))
-      .append($('<input type="hidden" name="csrfmiddlewaretoken" />')
-        .attr('value', csrfToken))
-      .submit();
+  $('.js-post-link').click(function (e) {
+    followPostLink($(this).attr('href'));
+    return false;
+  });
+  $('.js-post-btn').click(function (e) {
+    followPostLink($(this).attr('data-action'));
+    return false;
+  });
+  $('.js-get-btn').click(function (e) {
+    window.location = $(this).attr('data-href');
     return false;
   });
 

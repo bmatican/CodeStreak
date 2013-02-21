@@ -1,9 +1,3 @@
--- Fix timer on unregistered
--- edit contest work in admin
-
-DONE: Create :cs:problem-set-for-no-score (if not registered)
-
 -- Ajax for contest status (refresh page on state change)
--- Ajax for log entries
 
 -- ticks for log entries for shots

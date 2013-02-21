@@ -113,7 +113,7 @@ class :cs:header(:x:element):
                     <li class="divider"></li>
                     <li>
                         <a tabindex="-1" href={settings.LOGOUT_URL}
-                            class="post-link">
+                            class="js-post-link">
                             Log out
                         </a>
                     </li>
@@ -169,7 +169,7 @@ class :cs:header-link(:x:element):
             {self.getChildren()}
         </a>
         if self.getAttribute('post'):
-            a_xhp.setAttribute('class', 'post-link')
+            a_xhp.setAttribute('class', 'js-post-link')
 
         xhp = <li>{a_xhp}</li>
         if self.getAttribute('active'):

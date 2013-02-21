@@ -179,15 +179,11 @@ def _contest_home_admin(request, contest, last_log_entry=None):
   else:
     raise Http404 #TODO: just in case of inconsistency...
 
-  if show_nothing == True:
-    button_form = <x:frag />
-  else:
-    button_form = \
-    <form class="pull-right" method="post"
-      action={url_reverse(button_action, args=(contest.id,))}>
-      <cs:csrf request={request} />
-      {button}
-    </form>
+  if show_nothing == False:
+    button.setAttribute('class',
+        button.getAttribute('class') + ' js-post-btn')
+    button.setAttribute('data-action',
+        url_reverse(button_action, args=(contest.id,)))
 
   entries = LogEntry.get_all_entries(contest.id, last_log_entry)
 
@@ -201,13 +197,23 @@ def _contest_home_admin(request, contest, last_log_entry=None):
 
   content = \
   <div class="contest-activity-log">
-    {button_form}
-    <h2>{'{} Activity Log'.format(contest.name)}</h2>
+    <div class="btn-toolbar pull-right">
+      {button}
+      <button class="btn js-get-btn"
+        data-href={url_reverse('admin:contests_contest_change',
+                               args=(contest.id,))}>
+        Edit
+      </button>
+    </div>
+
+    <h2>
+      {'{} Activity Log'.format(contest.name)}
+    </h2>
     <script type="text/javascript">
-        {'var contestId = {};'.format(contest.id)}
+      {'var contestId = {};'.format(contest.id)}
     </script>
     <script type="text/javascript">
-        {'var lastLogEntry = {};'.format(new_last_log_entry)}
+      {'var lastLogEntry = {};'.format(new_last_log_entry)}
     </script>
     {content_entries}
   </div>

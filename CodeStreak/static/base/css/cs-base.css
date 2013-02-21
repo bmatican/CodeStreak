@@ -11,19 +11,23 @@ body {
 }
 
 .user-img {
-  max-height:18px;
-  width:auto;
-  vertical-align:middle;
+  max-height: 18px;
+  width: auto;
+  vertical-align: middle;
   border-radius: 3px;
   -moz-border-radius: 3px;
   -khtml-border-radius: 3px;
   -webkit-border-radius: 3px;
-  margin-left:4px;
-  margin-right:4px;
-  margin-top:0px;
-  margin-bottom:0px;
+  margin-left: 4px;
+  margin-right: 4px;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 
 .form-post-link {
   margin: 0;
+}
+
+#facebook-button {
+  margin-left: 15px;
 }
