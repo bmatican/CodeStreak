@@ -28,7 +28,21 @@ class LogEntry(CachingMixin, models.Model):
   type = models.IntegerField(choices=EVENTS)
   user = models.ForeignKey(User, blank=True, null=True,
                            related_name='contest_log_entry_set')
+  # null if not applicable
+  resolved = models.NullBooleanField()
   task = models.ForeignKey('Task', blank=True, null=True)
+
+  def toggle_resolved(self):
+    if self.resolved == None:
+      return False
+    else:
+      self.resolved = not self.resolved
+      self.save()
+      return True
+
+  @classmethod
+  def get_log_entry(cls, log_id):
+    return cls.objects.get(id=log_id)
 
   @classmethod
   def get_all_entries(cls, contest_id, last_log_entry=None):
@@ -46,12 +60,21 @@ class LogEntry(CachingMixin, models.Model):
     ).save()
 
   @classmethod
+  def get_default_resolved(cls, type):
+    if type == LogEntry.TASK_PASSED or type == LogEntry.TASK_SKIPPED:
+      return False
+    else:
+      return None
+
+  @classmethod
   def _make_task_entry(cls, contest_id, type, user_id, task_id):
+    default_resolved_value = cls.get_default_resolved(type)
     cls.objects.create(
       contest_id=contest_id,
       type=type,
       user_id=user_id,
       task_id=task_id,
+      resolved = default_resolved_value
     ).save()
 
   @classmethod

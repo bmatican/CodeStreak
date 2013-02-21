@@ -156,6 +156,19 @@ $(document).ready(function () {
         if (response.verdict === 'ok') {
           lastLogEntry = response.message.last_log_entry;
           $('#log-entries').prepend(response.message.entries);
+          var badges = response.message.badges;
+          $('.log-toggle-link').each(function(index, element) {
+            var log_id = parseInt($(this).attr('data-log-id'))
+            var badge = badges[log_id]
+            if (badge !== undefined) {
+              $(this).empty();
+              $(this).append(badge);
+            } 
+          });
+          if (response.message.entries !== "") {
+            console.log("onContentLoaded");
+            onContentLoaded();
+          }
         }
       });
     };
@@ -224,7 +237,8 @@ function pullData(provider, payload, type, callback) {
   });
 }
 
-$(document).ready(function () {
+// should be called each time new content is loaded and the page is loaded
+function activateContent() {
   var showResponse = function (response, element, button) {
     var message, message_style, doReload;
     if (response.verdict === 'success') {
@@ -262,6 +276,7 @@ $(document).ready(function () {
       }, 1000);
     }
   };
+  $('.submit-form').off('submit');
 
   $('.submit-form').submit(function (e) {
     var task_id = parseInt($(this).attr('data-task-id')),
@@ -287,6 +302,7 @@ $(document).ready(function () {
     return false;
   });
 
+  $('.skip-button button').off('click');
   $('.skip-button button').click(function (e) {
     var response = $(this).parent().siblings('.task-response'),
       data = {
@@ -300,6 +316,34 @@ $(document).ready(function () {
     });
     return false;
   });
+
+  $('.log-toggle-link').off('click');
+  $('.log-toggle-link').click(function(e) {
+    var logId = parseInt($(this).attr('data-log-id'))
+    data = {
+        'log_id' : logId
+    }
+    var jself = $(this);
+    pullData('toggleLog', data, 'post', function(feedback) {
+      if (feedback.verdict === 'ok') {
+        jself.empty();
+        jself.append(feedback.badge);
+      } else {
+        console.log('error: ', feedback.message);
+      }
+    });
+    return false;
+  });
+
+}
+
+
+function onContentLoaded() {
+    activateContent();
+}
+
+$(document).ready(function () {
+    activateContent(); 
 });
 
 $.fn.animateHighlight = function(duration) {

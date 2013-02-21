@@ -406,14 +406,46 @@ def fetch_contest_logs(request, contest, last_log_entry=0):
   content = <x:frag />
   for entry in entries:
     content.appendChild(<cs:log-entry entry={entry} />)
-  return {'verdict': 'ok', 'message': {
-    'entries': str(content),
-    'last_log_entry': entries[0].id if entries else last_log_entry
-  }}
+  all_entries = LogEntry.get_all_entries(contest.id)
+  badges = dict()
+  for entry in all_entries:
+    if not entry.resolved is None:
+      badge = \
+      <cs:log-entry-resolved-badge entry={entry} />
+      badges[entry.id] = str(badge)
+  return {
+    'verdict': 'ok',
+    'message': {
+      'entries': str(content),
+      'badges': badges,
+      'last_log_entry': entries[0].id if entries else last_log_entry
+    }
+  }
 
+@ajax_decorator
+@staff_member_required
+@require_POST
+def toggle_log(request, log_id):
+  try:
+    log = LogEntry.get_log_entry(log_id)
+  except LogEntry.DoesNotExist:
+    raise Http404
+  if log.toggle_resolved():
+    badge = \
+    <cs:log-entry-resolved-badge entry={log} />
+    return {
+             'verdict': 'ok',
+             'badge': str(badge)
+           }
+  else:
+    return {
+             'verdict' : 'error',
+             'message' : 'This log cannot be toggled.'
+           }
 
 data_providers = {
   'skipTask': skip_task,
+  'toggleLog' : toggle_log,
   'submitTask': submit_task,
   'getContestState': get_contest_state,
   'fetchContestLogs': fetch_contest_logs,

@@ -381,6 +381,24 @@ class :cs:contest-rankings(:x:element):
 
         return table
 
+class :cs:log-entry-resolved-badge(:x:element):
+    attribute LogEntry entry @required
+
+
+    def render(self):
+      entry = self.getAttribute('entry')
+      if entry.resolved == False:
+        return \
+        <span class="label label-important">
+          unresolved
+        </span>
+      elif entry.resolved == True:
+        return \
+        <span class="label label-info">
+          resolved
+        </span>
+      else:
+        return <x:frag />
 
 class :cs:log-entry(:x:element):
     attribute LogEntry entry @required
@@ -420,11 +438,16 @@ class :cs:log-entry(:x:element):
             {date_format(entry.time, 'DATETIME_FORMAT')}
           </div>
           <div class="span2">{user_information}</div>
-          <div class="span7">{log_information}</div>
+          <div class="span5">{log_information}</div>
+          <div class="span2">
+            <a href="#" class="log-toggle-link" data-log-id={entry.id}>
+              <cs:log-entry-resolved-badge entry={entry} />
+            </a>
+          </div>
         </div>
 
 
 __all__ = ["xhpy_cs__header_contest", "xhpy_cs__header_home",
            "xhpy_cs__contest_list", "xhpy_cs__contest_problem_set",
            "xhpy_cs__contest_rankings", "xhpy_cs__task_show",
-           "xhpy_cs__log_entry"]
+           "xhpy_cs__log_entry", "xhpy_cs__log_entry_resolved_badge"]
