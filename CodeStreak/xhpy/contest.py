@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse as url_reverse
+from django.utils.formats import date_format
 from django.utils.timezone import now
 
 from CodeStreak.xhpy.base import *
@@ -118,7 +119,8 @@ class :cs:contest-list(:x:element):
                     <td><a href={contest_url}>{contest.name}</a></td>
                     <td>
                         <a href={contest_url}>
-                            {contest.intended_start_date}
+                            {date_format(contest.intended_start_date,
+                                         'DATETIME_FORMAT')}
                         </a>
                     </td>
                     <td>
@@ -401,7 +403,9 @@ class :cs:log-entry(:x:element):
 
         return \
         <div class="log-entry row-fluid">
-          <div class="span3">{entry.time}</div>
+          <div class="span3">
+            {date_format(entry.time, 'DATETIME_FORMAT')}
+          </div>
           <div class="span2">{user_information}</div>
           <div class="span7">{log_information}</div>
         </div>
