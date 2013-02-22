@@ -1,5 +1,5 @@
 function endsWith(str, suffix) {
-    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
 function getCookie(name) {
@@ -26,16 +26,15 @@ var staticUrl;
 function setGlobal(name, notInt) {
   if (notInt !== true) {
     notInt = false;
-  };
-  var ending = "Id";
-  var id = name;
+  }
+  var ending = "Id", id = name;
   if (!endsWith(id, ending)) {
     id += ending;
-  };
+  }
   $('#' + id).each(function () {
     var val = $(this).attr('value');
     if (notInt === false) {
-      window[name] = parseInt(val);
+      window[name] = parseInt(val, 10);
     } else {
       window[name] = val;
     }
@@ -56,6 +55,39 @@ function followPostLink(action) {
     .append($('<input type="hidden" name="csrfmiddlewaretoken" />')
       .attr('value', csrfToken))
     .submit();
+}
+
+function pullData(provider, payload, type, callback) {
+  var request = $.ajax({
+    url: "/data_provider/" + provider,
+    type: type,
+    data: {
+      "payload": JSON.stringify(payload)
+    }
+  });
+
+  request.done(function (response, textStatus, jqXHR) {
+    callback(JSON.parse(response));
+  });
+}
+
+function showModal(modalHeader, modalBody, callback) {
+  var body, header;
+  body = $('#modal-dialog-body');
+  body.empty();
+  body.append(modalBody);
+  header = $('#modal-dialog-header');
+  header.empty();
+  header.append(modalHeader);
+  $('#modal-dialog').modal({
+    keyboard: true
+  });
+  $('#modal-dialog-ok-button').off('click');
+  $('#modal-dialog-ok-button').click(function () {
+    callback();
+    $('#modal-dialog').modal('hide');
+  });
+  $('#modal-dialog').modal('show');
 }
 
 $(document).ready(function () {
@@ -111,38 +143,40 @@ $(document).ready(function () {
     intervalID = setInterval(updateTimeLeft, 1000);
   });
 
-  var oldContestState = undefined;
-
-  var checkContestState = function() {
-    if (!contestId) return;
-    var data = {
-                 'contest_id' : contestId,
-               }
-    pullData('getContestState', data, 'get', function(response) {
-      if (response.verdict === 'ok') {
-        if (oldContestState === undefined) {
-          oldContestState = response.message;
-        } else if (oldContestState != response.message) {
-          if (response.message === 1) {  // STARTED
-            modalHeader = $('<p></p>');
-            modalHeader.html('Contest has started!');
-            modalBody = $('<p></p>');
-            modalBody.html('Do you want to be redirected to problem set?');
-            showModal(modalHeader, modalBody, function() {
-              window.location = '/contest/' + contestId;
-            });
-          } else if (response.message === 2 || response.message === 3) {
-            // PAUSED or STOPPED
-            // refresh immediately
-            window.location = '/contest/' + contestId;
-          }
-          oldContestState = response.message;
-        }
-      } else {
-        console.log('Catastrophic failure! Failed to get contest state!')
+  var oldContestState,
+    checkContestState = function () {
+      if (!contestId) {
+        return;
       }
-    })
-  };
+      var data = {
+        'contest_id': contestId
+      };
+      pullData('getContestState', data, 'get', function (response) {
+        if (response.verdict === 'ok') {
+          if (oldContestState === undefined) {
+            oldContestState = response.message;
+          } else if (oldContestState !== response.message) {
+            if (response.message === 1) {  // STARTED
+              var modalHeader, modalBody;
+              modalHeader = $('<p></p>');
+              modalHeader.html('Contest has started!');
+              modalBody = $('<p></p>');
+              modalBody.html('Do you want to be redirected to problem set?');
+              showModal(modalHeader, modalBody, function () {
+                window.location = '/contest/' + contestId;
+              });
+            } else if (response.message === 2 || response.message === 3) {
+              // PAUSED or STOPPED
+              // refresh immediately
+              window.location = '/contest/' + contestId;
+            }
+            oldContestState = response.message;
+          }
+        } else {
+          console.log('Catastrophic failure! Failed to get contest state!');
+        }
+      });
+    };
 
   setInterval(checkContestState, 2000);
 
@@ -157,13 +191,13 @@ $(document).ready(function () {
           lastLogEntry = response.message.last_log_entry;
           $('#log-entries').prepend(response.message.entries);
           var badges = response.message.badges;
-          $('.log-toggle-link').each(function(index, element) {
-            var log_id = parseInt($(this).attr('data-log-id'))
-            var badge = badges[log_id]
+          $('.log-toggle-link').each(function (index, element) {
+            var log_id = parseInt($(this).attr('data-log-id'), 10),
+              badge = badges[log_id];
             if (badge !== undefined) {
               $(this).empty();
               $(this).append(badge);
-            } 
+            }
           });
           if (response.message.entries !== "") {
             console.log("onContentLoaded");
@@ -187,10 +221,9 @@ var F = new facebookClass(facebookAppId);
 F.load();
 
 function showAlert(message) {
-  $('#alerts').append(
-    $('<div class="alert alert-info">')
-      .append('<button data-dismiss="alert" type="button" class="close">x</button>')
-      .append(message));
+  $('#alerts').append($('<div class="alert alert-info">')
+    .append('<button data-dismiss="alert" type="button" class="close">x</button>')
+    .append(message));
 }
 
 function csrfSafeMethod(method) {
@@ -223,20 +256,6 @@ $.ajaxSetup({
   }
 });
 
-function pullData(provider, payload, type, callback) {
-  var request = $.ajax({
-    url: "/data_provider/" + provider,
-    type: type,
-    data: {
-      "payload": JSON.stringify(payload)
-    }
-  });
-
-  request.done(function (response, textStatus, jqXHR) {
-    callback(JSON.parse(response));
-  });
-}
-
 // should be called each time new content is loaded and the page is loaded
 function activateContent() {
   var showResponse = function (response, element, button) {
@@ -260,10 +279,9 @@ function activateContent() {
     }
 
     button.button('reset');
-    element.html(
-      $('<p></p>')
-        .attr('class', message_style)
-        .append(message));
+    element.html($('<p></p>')
+      .attr('class', message_style)
+      .append(message));
     element.hide();
     element.fadeIn('normal', function () {
       setTimeout(function () {
@@ -279,7 +297,7 @@ function activateContent() {
   $('.submit-form').off('submit');
 
   $('.submit-form').submit(function (e) {
-    var task_id = parseInt($(this).attr('data-task-id')),
+    var task_id = parseInt($(this).attr('data-task-id'), 10),
       answer = $(this).find('.answer').val(),
       response = $(this).siblings('.task-response'),
       button = $(this).find('.submit-button'),
@@ -306,7 +324,7 @@ function activateContent() {
   $('.skip-button button').click(function (e) {
     var response = $(this).parent().siblings('.task-response'),
       data = {
-        'task_id': parseInt($(this).parent().attr('data-task-id')),
+        'task_id': parseInt($(this).parent().attr('data-task-id'), 10),
         'contest_id': contestId
       };
 
@@ -318,16 +336,16 @@ function activateContent() {
   });
 
   $('.log-toggle-link').off('click');
-  $('.log-toggle-link').click(function(e) {
-    var logId = parseInt($(this).attr('data-log-id'))
-    data = {
-        'log_id' : logId
-    }
-    var jself = $(this);
-    pullData('toggleLog', data, 'post', function(feedback) {
+  $('.log-toggle-link').click(function (e) {
+    var logId = parseInt($(this).attr('data-log-id'), 10),
+      data = {
+        'log_id': logId
+      },
+      that = $(this);
+    pullData('toggleLog', data, 'post', function (feedback) {
       if (feedback.verdict === 'ok') {
-        jself.empty();
-        jself.append(feedback.badge);
+        that.empty();
+        that.append(feedback.badge);
       } else {
         console.log('error: ', feedback.message);
       }
@@ -337,39 +355,18 @@ function activateContent() {
 
 }
 
-
 function onContentLoaded() {
-    activateContent();
+  activateContent();
 }
 
 $(document).ready(function () {
-    activateContent(); 
+  activateContent();
 });
 
-$.fn.animateHighlight = function(duration) {
-    var animateMs = duration || 400;
-    var self = this;
-    self.stop().fadeOut(animateMs/2, function() {
-      self.fadeIn(animateMs/2);
-    });
+$.fn.animateHighlight = function (duration) {
+  var animateMs = duration || 400,
+    that = this;
+  that.stop().fadeOut(animateMs / 2, function () {
+    that.fadeIn(animateMs / 2);
+  });
 };
-
-
-function showModal(modalHeader, modalBody, callback) {
-  var body = $('#modal-dialog-body');
-  body.empty();
-  body.append(modalBody);
-  var header = $('#modal-dialog-header');
-  header.empty();
-  header.append(modalHeader);
-  $('#modal-dialog').modal({
-    keyboard: true
-  })
-  $('#modal-dialog-ok-button').off('click');
-  $('#modal-dialog-ok-button').click(
-    function() {
-      callback();
-      $('#modal-dialog').modal('hide');
-    });
-  $('#modal-dialog').modal('show');
-}

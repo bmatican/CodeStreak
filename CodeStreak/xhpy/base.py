@@ -58,7 +58,7 @@ class :cs:page(:x:element):
             <div id="fb-root" />
             <cs:hidden name={"facebookApp"} value={str(settings.FACEBOOK_APP_ID)} />
             <cs:hidden name={"staticUrl"} value={str(settings.STATIC_URL)} />
-            <cs:aux />
+            <cs:modal-dialog />
         </body>
 
         # Add CSS files to header
@@ -80,7 +80,7 @@ class :cs:page(:x:element):
             </html>
         </x:doctype>
 
-class :cs:aux(:x:element):
+class :cs:modal-dialog(:x:element):
   children empty
 
   def render(self):
