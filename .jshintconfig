@@ -1,0 +1,13 @@
+{
+  "browser": true,
+  "devel": true,
+  "jquery": true,
+
+  "indent" : 2,
+  "bitwise" : true,
+  "trailing" : true,
+  "curly" : true,
+  "eqeqeq" : true,
+  "undef" : true,
+  "immed" : true
+}

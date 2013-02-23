@@ -1,4 +1,16 @@
 {
   "project_id": "CodeStreak",
-  "conduit_uri": "http://phab.code4fun.de/"
+  "conduit_uri": "http://phab.code4fun.de/",
+  "load": [
+    "libcustom/src"
+  ],
+  "lint.engine": "DefaultLintEngine",
+
+  "lint.jshint.prefix": "/usr/local/bin",
+  "lint.jshint.bin": "jshint",
+  "lint.jshint.config": ".jshintconfig",
+
+  "lint.pylint.codes.error": "^(E|F).*",
+  "lint.pylint.codes.warning": "^(W|R|C).*",
+  "lint.pylint.codes.advice" : ""
 }
