@@ -35,7 +35,7 @@ def contest_list(request):
 
 
 def _contest_home_problems_unregistered(request, contest):
-  tasks = contest.assigned_tasks.all()
+  tasks = list(contest.assigned_tasks.all())
 
   default_task_id = -1
   task_id_display = int(request.GET.get('task_id', default_task_id))
@@ -64,7 +64,7 @@ def _contest_home_problems_registered(request, contest, see_all=False):
     raise Http404
 
   if see_all == True:
-    visible_tasks = contest.assigned_tasks.all()
+    visible_tasks = list(contest.assigned_tasks.all())
   else:
     visible_tasks = handler.get_visible_tasks()
 
