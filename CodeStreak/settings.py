@@ -6,14 +6,13 @@ TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Bogdan Alexandru Matican', 'bam39@cam.ac.uk'),
-    (u'Bogdan Cristian Tătăroiu', 'bct25@cam.ac.uk'),
+    (u'Bogdan Cristian T\u0103t\u0103roiu', 'bct25@cam.ac.uk'),
     ('Szymon Sidor', 'ss958@cam.ac.uk'),
 )
 
 MANAGERS = ADMINS
 
 import os
-import local_settings
 
 DATABASES = {
     'default': {
@@ -209,6 +208,7 @@ CACHE_PREFIX = CACHES['default']['KEY_PREFIX']
 CACHE_COUNT_TIMEOUT = CACHES['default']['TIMEOUT'] / 2 # seconds, not too long.
 
 try:
+  # import here to override, also catch error if file not here
   from local_settings import *
 except ImportError:
   pass
