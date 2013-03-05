@@ -1,22 +1,62 @@
 # /bin/bash
 
-MEMCACHED_PORT=11211
+# just inc ase, we define base python here
+if [ -z $PYTHON ];
+then
+  PYTHON=python
+fi
 
-start_memcached()
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+start_uwsgi()
 {
-  memcached -p $MEMCACHED_PORT &
-  MEMCACHED_PID=$!
-  echo "Starting memcached: pid=$MEMCACHED_PID"
+  echo "Starting uWSGI"
+  # TODO: fix permissions to 664, put user, nginx in same group and such..
+  uwsgi \
+    --socket /tmp/CodeStreak.sock \
+    --chmod-socket=666 \
+    --chdir $DIR \
+    --wsgi-file $DIR/CodeStreak/wsgi.py \
+    --master true \
+    --processes 10 \
+    --vacuum true \
+    $@
 }
 
-kill_memcached()
+start_fcgi()
 {
-  kill $MEMCACHED_PID
-  echo "Killing memcached: pid=$MEMCACHED_PID"
-  exit $?
+  echo "Starting FCGI"
+  $PYTHON manage.py runfcgi \
+    # method=prefork \
+    socket=/tmp/CodeStreak.socket \
+    # host=127.0.0.1 port=8080 \
+    settings=CodeStreak/settings_debug.py \
+    pidfile=/tmp/Codestreak.django.pid \
+    $@
 }
 
-# trap kill_memcached SIGINT
+start_normal()
+{
+  echo "Starting $PYTHON"
+  $PYTHON manage.py runserver $@
+}
 
-start_memcached
-python manage.py runserver 0.0.0.0:8000
+case $1 in
+"--uwsgi")
+  shift
+  start_uwsgi $@
+  ;;
+"--fcgi")
+  shift
+  start_fcgi $@
+  ;;
+"--pypy")
+  PYTHON=pypy
+  shift
+  start_normal $@
+  ;;
+*)
+  PYTHON=python
+  start_normal $@
+  ;;
+esac

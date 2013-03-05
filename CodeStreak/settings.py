@@ -1,7 +1,7 @@
 # coding=utf8
 # Django settings for CodeStreak project.
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (

@@ -1,0 +1,66 @@
+worker_processes  5;
+worker_rlimit_nofile 8192;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    # replace the following:
+    # $nginx_etc with /usr/local/etc/nginx for mac or /etc/nginx for linux
+    # set $project_name to the path to the project/app_name
+    #    eg: /Users/Mati/mati/work/CodeStreak/CodeStreak;
+    include         $nginx_etc/mime.types;
+    include         $nginx_etc/proxy.conf;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    error_log /tmp/CodeStreak.nginx.log error;
+    log_format main
+            '$remote_addr - $remote_user [$time_local] '
+            '"$request" $status $bytes_sent '
+            '"$http_referer" "$http_user_agent" '
+            '"$gzip_ratio"';
+
+    upstream django {
+        server unix:///tmp/CodeStreak.sock;    # for a file socket
+        # server 127.0.0.1:8001;      # for a web port socket
+    }
+
+    server {
+        root $project_name;
+
+        # the port your site will be served on
+        listen      8000;
+        # the domain name it will serve for
+        server_name 127.0.0.1 localhost;
+        charset     utf-8;
+
+        #Max upload size
+        client_max_body_size 75M;   # adjust to taste
+
+        location ~ ^/static/(.*)$ {
+            alias static_collected/$1;
+            expires 1d;
+        }
+
+        location ~ ^/media/(.*)$ {
+            alias media/$1;
+            expires 1d;
+        }
+
+        location ~ /favicon.ico {
+            alias static_collected/img/favicon.png;
+            expires 1d;
+        }
+
+        # Finally, send all non-media requests to the Django server.
+        location / {
+            # all proxy headers should have been set
+            uwsgi_pass  django;
+            include     $nginx_etc/uwsgi_params;
+        }
+    }
+}
