@@ -38,7 +38,7 @@ start_fcgi()
 start_normal()
 {
   echo "Starting $PYTHON"
-  $PYTHON manage.py runserver $@
+  $PYTHON manage.py runserver --settings=CodeStreak.settings_debug $@
 }
 
 case $1 in
