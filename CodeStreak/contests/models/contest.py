@@ -1,17 +1,13 @@
 from django.db import models, transaction, IntegrityError
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse as url_reverse
 from django.utils.timezone import now
-
-from caching.base import CachingMixin, CachingManager
+from django.contrib.auth.models import User
 
 from CodeStreak.contests.models.participation import Participation
 from CodeStreak.contests.models.score import Score
 from CodeStreak.contests.models.log_entry import LogEntry
 
-
-class Contest(CachingMixin, models.Model):
-  objects = CachingManager()
+class Contest(models.Model):
 
   UNASSIGNED = 0
   STARTED = 1

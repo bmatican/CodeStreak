@@ -1,12 +1,27 @@
 # /bin/bash
 
-# just inc ase, we define base python here
+# just in case, we define base python here
 if [ -z $PYTHON ];
 then
   PYTHON=python
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+MEMCACHED_PORT=11211
+MEMCACHED_PID_FILE=/tmp/memcached.pid
+
+start_memcached()
+{
+  memcached -d -p $MEMCACHED_PORT -P $MEMCACHED_PID_FILE
+  echo "Starting memcached"
+}
+
+kill_memcached()
+{
+  kill $(cat $MEMCACHED_PID_FILE)
+  echo "Killing memcached"
+}
 
 start_uwsgi()
 {
@@ -41,6 +56,10 @@ start_normal()
   $PYTHON manage.py runserver --settings=CodeStreak.settings_debug $@
 }
 
+##############################################################################
+start_memcached
+trap kill_memcached SIGINT
+##############################################################################
 case $1 in
 "--uwsgi")
   shift

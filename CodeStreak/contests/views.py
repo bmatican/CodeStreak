@@ -452,7 +452,7 @@ data_providers = {
 }
 
 
-@login_required
+# @login_required
 def data_provider(request, action):
   if request.is_ajax():
     try:

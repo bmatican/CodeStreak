@@ -1,10 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
 
-from caching.base import CachingMixin, CachingManager
-
-class Task(CachingMixin, models.Model):
-  objects = CachingManager()
+class Task(models.Model):
 
   UNASSIGNED = 0
   EASY = 1

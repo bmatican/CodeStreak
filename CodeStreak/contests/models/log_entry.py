@@ -1,10 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from caching.base import CachingMixin, CachingManager
-
-class LogEntry(CachingMixin, models.Model):
-  objects = CachingManager()
+class LogEntry(models.Model):
 
   CONTEST_STARTED = 1
   CONTEST_PAUSED = 2
@@ -46,7 +43,9 @@ class LogEntry(CachingMixin, models.Model):
 
   @classmethod
   def get_all_entries(cls, contest_id, last_log_entry=None):
-    query = cls.objects.filter(contest__id=contest_id)
+    query = cls.objects.select_related(
+      'user'
+    ).filter(contest__id=contest_id)
     if last_log_entry:
       query = query.filter(id__gt=last_log_entry)
     return query.all()

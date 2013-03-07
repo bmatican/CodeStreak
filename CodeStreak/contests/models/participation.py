@@ -1,10 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from caching.base import CachingMixin, CachingManager
-
-class Participation(CachingMixin, models.Model):
-  objects = CachingManager()
+class Participation(models.Model):
 
   contest = models.ForeignKey('Contest')
   user = models.ForeignKey(User)

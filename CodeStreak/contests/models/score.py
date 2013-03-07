@@ -1,15 +1,12 @@
 from django.db import models, transaction, IntegrityError
-from django.contrib.auth.models import User
 from datetime import datetime
-
-from caching.base import CachingMixin, CachingManager
+from django.contrib.auth.models import User
 
 from CodeStreak.contests.models.task import Task
 from CodeStreak.contests.models.log_entry import LogEntry
 from CodeStreak.contests.models.participation import Participation
 
-class Score(CachingMixin, models.Model):
-  objects = CachingManager()
+class Score(models.Model):
 
   SKIPPED = 0.5
   FULL = 1.0
