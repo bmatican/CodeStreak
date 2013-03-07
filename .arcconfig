@@ -6,7 +6,6 @@
   ],
   "lint.engine": "DefaultLintEngine",
 
-  "lint.jshint.prefix": "/usr/local/bin",
   "lint.jshint.bin": "jshint",
   "lint.jshint.config": ".jshintconfig",
 

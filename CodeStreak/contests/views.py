@@ -5,6 +5,7 @@ from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.utils.timezone import now
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 import json
 
@@ -355,6 +356,12 @@ def login_view(request):
     messages.error(request, 'You need to login first.')
   return HttpResponseRedirect(url_reverse('contest-list'))
 
+@ensure_csrf_cookie
+def login_success_view(request):
+  url = url_reverse('contest-list')
+  if 'HTTP_REFERER' in request.META:
+    url = request.META['HTTP_REFERER']
+  return HttpResponseRedirect(url)
 
 @require_POST
 def logout_view(request):

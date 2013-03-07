@@ -1,6 +1,7 @@
 # Copyright 2012 Bogdan-Cristian Tataroiu
 
 from django.core.context_processors import csrf
+from django.core.urlresolvers import reverse as url_reverse
 from django.conf import settings
 from django.contrib import messages
 from django_facebook.models import FacebookProfile
@@ -145,7 +146,9 @@ class :cs:header(:x:element):
             <li>
                 <form action="/facebook/connect/?facebook_login=1"
                     method="post">
-                    <input type="hidden" value="/" name="next" />
+                    <input type="hidden"
+                        value={url_reverse('auth_login_success')}
+                        name="next" />
                     <button id="facebook-button" type="button"
                         class="btn btn-primary pull-right"
                         data-loading-text="Loading..."

@@ -50,7 +50,7 @@ class TaskVisibilityHandler:
     instance.visible_tasks = instance.get_visible_tasks()
     return instance
 
-  
+
   def get_visible_tasks(self):
     if self.visible_tasks != []:
       return self.visible_tasks
@@ -58,7 +58,7 @@ class TaskVisibilityHandler:
       ids = self.get_visible_task_ids()
       return [self.task_by_id[id] for id in ids]
 
-    
+
   def get_visible_task_ids(self):
     if self.visible_task_ids != []:
       return self.visible_task_ids
